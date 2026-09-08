@@ -39,31 +39,33 @@ engine. The engine is product code: real tenants get the same automations, disab
 ## Files
 
 ```text
-platform/api/src/automations/{engine.py, registry.py, context.py, params.py, rules/{ghost_booking,room_auto_off}.py, router.py, schemas.py, service.py}
-platform/api/src/rooms/{presence.py, waste.py, router.py (panel data)}
-platform/api/src/assets/misplaced.py
-platform/api/tests/{automations,rooms,assets}/
-platform/api/alembic/versions/0003_*.py                    asset.misplaced_room_id, room_daily_stat if not present
-platform/simulator/src/scenarios.py                        ghost-meeting, move-laptop
+platform/api/src/services/automations/{engine,registry,context,params,automations.service}.ts, rules/{ghost-booking,room-auto-off}.rule.ts
+platform/api/src/routes/automations/index.ts
+platform/api/src/jobs/automations.processor.ts (BullMQ tick, runs in worker)
+platform/api/src/services/rooms/{presence.service,waste.service}.ts, platform/api/src/routes/rooms/index.ts (panel data)
+platform/api/src/services/assets/misplaced.service.ts
+platform/shared/src/dto/automations.ts
+platform/api/drizzle/0002_*.sql                           assets.misplaced_room_id, room_daily_stat if not present
+platform/simulator/src/scenarios.ts                        ghost-meeting, move-laptop
 platform/web/app/routes/{_shell.automations,_shell.automations.runs,rooms.$id.panel}.tsx
 platform/web/app/components/{waste-badge,presence-count,params-form}.tsx
 ```
 
 ## Steps
 
-1. **Engine**: APScheduler job every minute per tenant plus `run_now(key)`. Each rule implements
-   `evaluate(ctx) -> list[Decision]` and the engine applies decisions through `CommandService`. `ctx` gives
-   live cache, bookings now, presence, params, holds. Every run writes `automation_run` with decisions and
-   reasons, even when nothing happened. Per-tenant asyncio lock so alarm-triggered runs (Phase 3) do not race
-   the minute tick.
-2. **Presence**: derive from the live cache; debounce AP changes 60 s; publish over SSE as `room.presence`.
+1. **Engine**: BullMQ repeatable job `automations.tick` every minute per tenant plus `runNow(key)`. Each rule
+   implements `evaluate(ctx): Decision[]` and the engine applies decisions through `CommandService`. `ctx`
+   gives Redis live state, bookings now, presence, params, holds. Every run writes `AutomationRun` with
+   decisions and reasons, even when nothing happened. Per-tenant Redis lock so alarm-triggered runs (Phase 3)
+   do not race the minute tick.
+2. **Presence**: derive from Redis live state; debounce AP changes 60 s; publish `room.presence` on the tenant channel.
 3. **Waste**: track `empty_since` per room and integrate meter power; reset when occupied; persist daily totals
-   in `room_daily_stat` (also used in Phase 4).
-4. **Rules**: `ghost_booking`, `room_auto_off` per context.md §9. Dataset loader seeds `automation` rows with
+   in `RoomDailyStat` (also used in Phase 4).
+4. **Rules**: `ghost_booking`, `room_auto_off` per context.md §9. Dataset loader seeds `Automation` rows with
    defaults; in demo mode they are enabled.
 5. **Misplaced**: hourly job accumulating presence per (laptop, room); flag and unflag; notify custodian.
-6. **Web**: routes and badges; Automations page renders the params form from the rule's JSON schema exposed
-   by the API.
+6. **Web**: routes and badges; Automations page renders the params form from the rule's Zod schema shared via
+   `@platform/shared`.
 7. **Console**: ghost meeting, move laptop, run auto-off now.
 
 ## Validation
@@ -71,7 +73,7 @@ platform/web/app/components/{waste-badge,presence-count,params-form}.tsx
 - Storyline step 3 (ghost booking released, Room 1.3 wasting) reproducible from `/console` within two minutes
   after lowering grace minutes.
 - Auto-off: empty Room 1.1 with lights on → after `idle_minutes` (set to 1 for the test) lights and AC off,
-  `command` rows with `source=AUTOMATION`, floor plan dims.
+  `Command` rows with `source=AUTOMATION`, floor plan dims.
 - Server room `2.S` never receives a command even when "empty".
 - `make test` green.
 

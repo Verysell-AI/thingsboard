@@ -18,11 +18,11 @@ PDFs and emails, an offline run, an end-to-end smoke test and a rehearsed script
    theme with toolbar hidden; the iframe container carries the brand. Tenant gamma (no dataset) gets the
    neutral default brand and is equally clean.
 2. **Cross-tenant isolation tests**: automated tests log in to alpha and request every beta id discovered via
-   the beta API (assets, rooms, bookings, reports, notifications, SSE) and assert 404; the SSE stream contains
+   the beta API (assets, rooms, bookings, reports, notifications, WebSocket) and assert 404; the WebSocket feed carries
    only alpha device codes. Same in reverse.
 3. **RBAC matrix** enforced and tested per route: TENANT_ADMIN all; OPS_MANAGER all except users, branding and
    console; FIELD_OPERATOR read + commands on assets on their floor + bookings; FINANCE reports only; VIEWER
-   read only. UI hides or disables what the role cannot do, API returns 403, every 403 writes an `audit_log`
+   read only. UI hides or disables what the role cannot do, API returns 403, every 403 writes an `AuditLog`
    row with action `DENIED`.
 4. **Audit view** (`/audit`, TENANT_ADMIN and OPS_MANAGER): filterable table (actor, action, entity, date),
    before/after diff viewer, CSV export; commands, automation decisions, booking changes, asset changes, logins
@@ -35,7 +35,7 @@ PDFs and emails, an offline run, an end-to-end smoke test and a rehearsed script
    acceptable, reviewed for the ~40 strings visible in the storyline), `dir="rtl"` switching, mirrored layout
    using Tailwind logical properties, `Intl` formatting with `ar-AE`. Language toggle in the user menu; beta
    defaults to `ar` when `?lang=ar`.
-7. **Branded PDFs**: Playwright (Python) in the API container renders `/print/reports/{kind}/{id}` (print
+7. **Branded PDFs**: Playwright (Node) in the API container renders `/print/reports/{kind}/{id}` (print
    stylesheet) to PDF for the morning report, energy cost, savings, asset financials and asset register export;
    downloadable and attached to the monthly report email.
 8. **Offline run**: runbook step to disable the host's network; the whole storyline passes. A Playwright
@@ -57,11 +57,11 @@ PDFs and emails, an offline run, an end-to-end smoke test and a rehearsed script
 platform/web/app/i18n/{en.json, ar.json, index.ts}, app/styles/rtl.css
 platform/web/app/routes/{_shell.audit, print.reports.$kind.$id}.tsx
 platform/datasets/office-demo/brands/*/fonts/*, email/*, login-bg.*
-platform/api/src/reports/{pdf.py, print_router.py, export.py}
-platform/api/src/audit/router.py
-platform/api/src/cli/backup.py
-platform/api/src/auth/rbac.py                              single matrix table route_key → roles, applied by the auth dependency
-platform/api/tests/{test_isolation.py, test_rbac.py}
+platform/api/src/services/reports/{pdf.service,export.service}.ts, platform/api/src/routes/print/index.ts
+platform/api/src/routes/audit/index.ts
+platform/api/src/cli/backup.ts
+platform/api/src/hooks/rbac.matrix.ts                      single matrix table routeKey → roles, applied by the requireRole hook
+platform/api/test/{tenant-isolation.test.ts, rbac.test.ts}
 platform/e2e/tests/{smoke.spec.ts, offline-requests.spec.ts, brand-audit.spec.ts}
 platform/Makefile                                          backup, restore
 docs/demo/runbook.md
@@ -69,12 +69,12 @@ docs/demo/runbook.md
 
 ## Steps
 
-1. RBAC matrix as one table in `src/auth/rbac.py`; auth dependency applies it; `DENIED` audit; tests iterate the
-   table.
+1. RBAC matrix as one table in `src/hooks/rbac.matrix.ts`; the `requireRole` hook applies it; `DENIED`
+   audit; tests iterate the table.
 2. Isolation tests: a "discover all ids" helper built from the API itself so the test does not go stale.
 3. Audit route with diff viewer and CSV export.
 4. i18n extraction (build fails on untranslated keys), RTL stylesheet, `dir` on `<html>`, logical properties.
-5. Print routes and the Playwright PDF service (Playwright Python in the API image, official base image);
+5. Print routes and the Playwright PDF service (official Playwright Node base image for the API container);
    attach to emails; add downloads to report pages.
 6. Brand audit test: fetch each page, email and PDF and grep forbidden words.
 7. Offline request audit test; bundle fonts; confirm the ThingsBoard iframe loads no external assets.
@@ -91,7 +91,7 @@ docs/demo/runbook.md
 ## Risks
 
 - **ThingsBoard iframe session collision** with the live-rule-edit tab: two browser profiles (runbook).
-- **Playwright in the API image** adds ~400 MB; acceptable; use the official Playwright Python base image.
+- **Playwright in the API image** adds ~400 MB; acceptable; use the official Playwright Node base image.
 - **Arabic layout bugs** in third-party components: limit RTL demo to storyline pages and note known issues.
 
 ## Rollback

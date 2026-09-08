@@ -17,12 +17,14 @@ requirements it answers are in [../../docs/requirements/](../../docs/requirement
 
 - ThingsBoard CE runs **unmodified from the upstream Docker image**. No Java changes. This repo's Java tree is
   reference material only.
-- All new code lives under `platform/` at the repo root. Server side is **Python 3.12** (FastAPI following the
-  fastapi-best-practices layout, plus the simulator); web is a **brand-new TypeScript app** (React Router v8
-  framework mode, shadcn/ui, Tailwind, lucide-react). See context.md §3–4.
+- All new code lives under `platform/` at the repo root: a pnpm workspace in **Node.js 22 / TypeScript**
+  (plain Fastify API with Drizzle, BullMQ and Redis; Node simulator; React Router v8 web with shadcn/ui,
+  Tailwind, lucide-react). Python is used only for the later ML service. This matches the Node.js + Redis
+  pub/sub core described in the client's BRD. See context.md §3–4.
 - Provisioning (tenants, profiles, rule chain, dashboards) is separate from the demo dataset (office world,
   employees, bookings, history), so a real tenant can be provisioned without demo data.
-- Database schema changes go through Alembic migrations from the first table.
+- Database schema changes go through drizzle-kit SQL migrations from the first table; every tenant table has a
+  Postgres row-level-security policy.
 - Ports and hostnames are fixed in context.md §12 so the stack never collides with the local ThingsBoard dev
   setup on 8080/5433/1883.
 - No secrets committed. Local credentials live in `platform/.env.example` and are for local use only.
@@ -38,7 +40,7 @@ real hardware, time acceleration of the live clock (history is backfilled instea
 
 | Phase | File | Delivers | Depends on | Est. (1 dev + Claude) |
 |-------|------|----------|------------|-----------------------|
-| 0 | [phase-0-foundation.md](phase-0-foundation.md) | Compose stack, dataset definition, ThingsBoard provisioning, simulator skeleton, API skeleton, web shell with branding, scenario console | — | 2 weeks |
+| 0 | [phase-0-foundation.md](phase-0-foundation.md) | Compose stack (incl. Redis), dataset definition, ThingsBoard provisioning, simulator skeleton, API skeleton with WebSocket feed, web shell with branding, scenario console | — | 2 weeks |
 | 1 | [phase-1-things-and-states.md](phase-1-things-and-states.md) | Levels 0–1: floor plan twin, asset register, laptop fleet, new-employee flow, rooms and bookings, light/AC control, meters and energy dashboards | 0 | 1.5 weeks |
 | 2 | [phase-2-combinations.md](phase-2-combinations.md) | Level 2: laptops as occupancy, waste badge, ghost-booking release, per-room auto-off, misplaced laptop, room panel, automation engine | 1 | 1 week |
 | 3 | [phase-3-automation.md](phase-3-automation.md) | Level 3: 8 PM sweep and morning report, late-worker zone, pre-cool, peak shedding, holiday mode, night anomaly | 2 | 1 week |

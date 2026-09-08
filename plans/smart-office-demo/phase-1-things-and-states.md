@@ -15,7 +15,7 @@ demo-specific.
 
 1. **Floor plan** (`/floors/:floor`): SVG per floor from `location.geometry`. Rooms coloured by state with
    badges for lights on and AC on; laptops drawn as dots on desks and in meeting rooms, green online, grey
-   offline, amber Warning. Clicking anything opens its asset drawer. Updates live via SSE within 2 s.
+   offline, amber Warning. Clicking anything opens its asset drawer. Updates live via WebSocket within 2 s.
 2. **Asset register** (`/assets`): table with search, filters (class, type, floor, room, custodian, status),
    BRD asset-master columns (code, name, class/type/brand/model, serial, location, custodian, purchase date and
    cost, warranty end, status, live state). Detail drawer: attributes, live telemetry, 24 h history chart
@@ -43,19 +43,20 @@ demo-specific.
 ```text
 platform/datasets/office-demo/world.json                  confirm geometry per room and desk (Track A)
 platform/thingsboard/dashboards/{energy-overview,floor-drilldown,room-detail}.json   (Track A)
-platform/api/src/cli/{dataset.py (bookings week), provision.py (dashboard ids → tenant.brand.dashboards)}
-platform/simulator/src/bookings.py, platform/common/platform_common/behaviours/occupancy.py   poll API bookings; occupancy follows attendance
-platform/api/src/{locations,assets,employees,rooms,energy,notifications}/{router,schemas,service,dependencies}.py
-platform/api/src/rooms/internal_router.py               GET /internal/bookings/now for the simulator
-platform/api/src/energy/history.py                       ThingsBoard history proxy with aggregation and caching
-platform/api/tests/{locations,assets,employees,rooms,energy,notifications}/
-platform/api/alembic/versions/0002_*.py                   only if columns are missing
+platform/api/src/cli/{dataset.ts (bookings week), provision.ts (dashboard ids → Tenant.brand.dashboards)}
+platform/simulator/src/bookings.ts, platform/shared/src/behaviours/occupancy.ts   poll API bookings; occupancy follows attendance
+platform/shared/src/dto/{locations,assets,employees,rooms,bookings,energy,notifications}.ts
+platform/api/src/routes/{locations,assets,employees,rooms,bookings,energy,notifications}/index.ts
+platform/api/src/services/{locations,assets,employees,rooms,energy,notifications}/*.service.ts + *.test.ts
+platform/api/src/routes/internal/bookings/index.ts   GET /internal/bookings/now for the simulator
+platform/api/src/services/energy/history.service.ts               ThingsBoard history proxy with aggregation and Redis caching
+platform/api/drizzle/0001_*.sql                          only if columns are missing
 platform/web/app/routes/{_shell.floors.$floor,_shell.assets,_shell.assets.$id,_shell.employees.new,_shell.rooms,_shell.rooms.$id,_shell.energy,_shell.notifications}.tsx
 platform/web/app/components/{floor-plan-svg,live-badge,asset-actions,booking-timeline,tb-dashboard-frame}.tsx
 ```
 
-Tracks: **A** dataset geometry + dashboards + CLI; **B** simulator bookings/occupancy; **C** API routers
-and services; **D** web routes. C publishes response models first, D regenerates types with `make types`.
+Tracks: **A** dataset geometry + dashboards + CLI; **B** simulator bookings/occupancy; **C** API modules;
+**D** web routes. C and D agree on the Zod DTOs in `@platform/shared` first.
 
 ## Steps
 
@@ -70,7 +71,7 @@ and services; **D** web routes. C publishes response models first, D regenerates
    count=n` for `FULL` from start, from start+12 min for `LATE`, never for `GHOST`; also occupied when a
    `meeting_heavy` persona's laptop is in the room.
 4. **API**: routers and services above. `HistoryService` proxies ThingsBoard `values/timeseries` with `agg`,
-   caps ranges, caches 30 s. `NotificationService.create()` + `GET /notifications` + `POST /{id}/read`.
+   caps ranges, caches 30 s in Redis. `NotificationService.create()` + `GET /notifications` + `POST /{id}/read`.
    New-employee flow as one service method with compensation.
 5. **Web**: routes above using loaders for initial data and TanStack Query for mutations and live refresh.
    `TbDashboardFrame` fetches the embed URL and renders the iframe with a placeholder while loading. Asset
@@ -87,7 +88,7 @@ and services; **D** web routes. C publishes response models first, D regenerates
 - Log in as `viewer@alpha.demo`: switches disabled; `curl` the command endpoint with the viewer token → 403 and
   an `audit_log` row with action `DENIED`.
 - Tenants see only their own rooms and assets; gamma (no dataset) shows empty lists, no errors.
-- `make test` green; `make types` no diff.
+- `make test` green.
 
 ## Risks
 
@@ -95,7 +96,7 @@ and services; **D** web routes. C publishes response models first, D regenerates
   UI tab used for the live rule edit in Phase 5; use a separate browser profile for that tab, or fall back to
   public dashboards (context.md §6.6).
 - **Dashboard entity aliases** must not hard-code ids; test by importing into beta.
-- **SSE volume**: ~130 devices every 10 s is fine; batch frames per 500 ms anyway.
+- **WebSocket volume**: ~130 devices every 10 s is fine; batch frames per 500 ms anyway.
 
 ## Rollback
 
