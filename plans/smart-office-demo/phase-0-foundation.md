@@ -1,6 +1,6 @@
 # Phase 0 — Foundation
 
-Status: Not started
+Status: Done (2026-09-08) — see [reports/phase-0-foundation.md](reports/phase-0-foundation.md)
 Depends on: nothing. Read [context.md](context.md) sections 2–6, 8, 11–13 first.
 
 ## Context
@@ -15,7 +15,7 @@ that a tenant without a dataset is already a valid, empty platform.
 ## Requirements and acceptance criteria
 
 1. `make up` on a clean Docker host starts ThingsBoard, postgres, redis, api, simulator, web, mailpit with the
-   ports in context.md §12, and returns only when ThingsBoard answers `GET /api/auth/login` with 401 (health)
+   ports in context.md §12, and returns only when ThingsBoard answers `GET /api/auth/login` with an HTTP status (302 on 4.2.1.1; health)
    and the API answers `GET /health` (which checks Postgres, Redis and ThingsBoard reachability).
 2. `make provision TENANT=alpha` creates: ThingsBoard tenant, `svc-api` and `svc-dashboards` users, the seven
    device profiles with alarm rules from `platform/thingsboard/device-profiles/`, asset profiles, the root rule

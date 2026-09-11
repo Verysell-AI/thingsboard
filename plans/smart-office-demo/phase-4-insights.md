@@ -1,6 +1,6 @@
 # Phase 4 — Insights and asset lifecycle (ladder Level 4)
 
-Status: Not started
+Status: Done (2026-09-10), see [reports/phase-4-insights.md](reports/phase-4-insights.md)
 Depends on: Phase 3 done. Read [context.md](context.md) §6.2 (aggregates, backfill), §6.5 (backfill filter), §7.
 
 ## Context

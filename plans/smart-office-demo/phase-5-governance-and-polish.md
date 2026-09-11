@@ -1,6 +1,6 @@
 # Phase 5 — Governance, white-label polish, rehearsal (ladder Level 5)
 
-Status: Not started
+Status: Done (2026-09-10), see [reports/phase-5-governance-and-polish.md](reports/phase-5-governance-and-polish.md)
 Depends on: Phase 4 done. Read [context.md](context.md) §1, §6.4, §11, §12 and the storyline in
 docs/demo/demo-plan.md.
 
@@ -44,7 +44,8 @@ PDFs and emails, an offline run, an end-to-end smoke test and a rehearsed script
 9. **Playwright smoke** (`platform/e2e`): login both tenants, floor plan renders with live dots, new employee
    flow, run sweep and assert rooms dim and the run summary appears, viewer refusal toast, brand switch, RTL
    toggle. `make e2e` against the compose stack.
-10. **Runbook** `docs/demo/runbook.md`: pre-demo checklist (down, up, provision, dataset, backfill, time hint,
+10. **Runbook** `docs/demo/runbook.md`: pre-demo checklist (down, up, provision, dataset, backfill, time
+    machine reset to real time,
     browser profiles, phone on Wi-Fi with `?tenant=`), the ten-minute script with exact clicks and expected
     results, recovery steps (restart simulator, reload one tenant's dataset, restart ThingsBoard), and likely
     DCS questions with our answers (on-prem, white-label, RBAC, ERP path, ThingsBoard base, real devices).

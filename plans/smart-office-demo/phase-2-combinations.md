@@ -1,6 +1,6 @@
 # Phase 2 — Combinations (ladder Level 2)
 
-Status: Not started
+Status: Done (2026-09-10), see [reports/phase-2-combinations.md](reports/phase-2-combinations.md)
 Depends on: Phase 1 done. Read [context.md](context.md) §9, §10.
 
 ## Context
@@ -33,8 +33,13 @@ engine. The engine is product code: real tenants get the same automations, disab
    next booking, occupancy count, "used X kWh today, AED Y", Release / Extend button for the organiser.
 7. **Automations page** (`/automations`, OPS_MANAGER+): list with enabled toggle, params editor (JSON-schema
    form generated from the Pydantic params model), last run summary, "Run now". Runs at `/automations/runs`.
-8. Tests: presence derivation, waste integral, ghost release decision, auto-off decision including critical
-   exclusion and booking guard, misplaced detection. Decision functions are pure and table-tested.
+8. **Business clock**: every rule, `empty_since`, booking lookup and run timestamp uses
+   `ClockService.now(tenant)` (context.md §8.1), never `Date.now()`. The engine subscribes to `clock` events
+   and runs an immediate tick per tenant on each; while `speed > 1` it ticks every `max(5 s, 60 s / speed)`
+   real seconds. Validation: fast-forward 10 minutes from the console → `room_auto_off` fires within one tick.
+9. Tests: presence derivation, waste integral, ghost release decision, auto-off decision including critical
+   exclusion and booking guard, misplaced detection, and a clock test (jump forward → idle rule fires; real
+   `Date.now()` untouched). Decision functions are pure and table-tested with an injected `now`.
 
 ## Files
 

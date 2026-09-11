@@ -30,7 +30,8 @@ devices would, so replacing it with real hardware changes nothing in the API or 
   browser ──────────▶  │  web (React Router SPA, nginx) ──REST + WebSocket──▶ api (Fastify)│
   alpha.localhost      │        │ iframe                            │   │   │            │
   beta.localhost       │        ▼                                   │   │   └──▶ mailpit│
-                       │  thingsboard (tb-postgres image) ◀─────────┘   │               │
+                       │  thingsboard (tb-node image) ◀─────────────┘   │               │
+                       │     │ JDBC ──▶ tb-db (PostgreSQL + TimescaleDB, core data only)    │
                        │     ▲  ▲        │ rule chain                   ▼               │
                        │     │  │        └──REST call node──▶ api /internal/tb/events   │
                        │  MQTT  REST (provision, latest values, RPC, dashboards)        │
@@ -49,7 +50,7 @@ Responsibilities:
 
 | Component | Owns | Does not own |
 |-----------|------|--------------|
-| **ThingsBoard** | Devices and credentials, telemetry history, device activity (online/offline), alarm rules on device profiles, energy dashboards, RPC delivery to devices | Business entities, people, bookings, automation logic, branding |
+| **ThingsBoard** | Devices and credentials, telemetry history (in its own PostgreSQL + TimescaleDB database `tb-db`), device activity (online/offline), alarm rules on device profiles, RPC delivery to devices | Business entities, people, bookings, automation logic, branding |
 | **api** (`platform/api`, Fastify) | Tenants and branding, users and roles, asset register, employees and custody, rooms and bookings, automation engine, notifications, maintenance tasks, reports and PDFs, audit log, live state, WebSocket feed to web, CLI for provisioning/dataset/backfill | Telemetry storage, device transport |
 | **redis** | Live-state cache shared by API replicas, pub/sub fan-out of events to WebSocket gateways, 60-second replay buffer (Redis Streams), BullMQ queues for scheduled and retried jobs | Durable business data |
 | **simulator** (`platform/simulator`, Node) | One MQTT client per virtual device, behaviour models, persona schedules, scenarios, answering RPC | Any business logic |
@@ -74,7 +75,7 @@ goes through the API so RBAC, tenancy and audit are enforced in one place.
 | Web | **Brand-new service**: React Router **v8 framework mode**, **SPA mode** (`ssr: false`) served by nginx, TypeScript strict, **Tailwind CSS**, **shadcn/ui**, **lucide-react**, `react-i18next` (en, ar), TanStack Query alongside route loaders, `socket.io-client` | Requested stack; no relation to ThingsBoard's Angular UI |
 | PDF and email | Playwright (Node) rendering print routes to PDF inside the API container; `nodemailer` + `react-email` templates branded per tenant | One template set for screen and PDF |
 | Auth | `@fastify/jwt` access + refresh tokens, `bcrypt`, `requireRole` hook, tenant resolution by `Host` | |
-| ThingsBoard | `thingsboard/tb-postgres` upstream image, pin the newest **4.x stable** tag on Docker Hub at Phase 0 and record it below. Never a SNAPSHOT | Unmodified platform |
+| ThingsBoard | `thingsboard/tb-node` upstream image (monolith, in-memory queue) with an external `timescale/timescaledb` database, pinned **4.x stable** tags recorded below. Never a SNAPSHOT | Unmodified platform; TimescaleDB is the historian the client's Smart Building document names, and the core supports it natively (`DATABASE_TS_TYPE=timescale`) |
 | Tests | Vitest everywhere (`shared`, `api`, `simulator`, `web`); API integration tests use `app.inject()` against a test database; Playwright for browser E2E | |
 | Lint/format | ESLint (typescript-eslint) + Prettier, shared config at the workspace root | |
 
@@ -202,9 +203,10 @@ Engineering, Operations), a laptop and a persona from `personas.json`:
 | `meeting_heavy` | 09:00 | 18:30 | 4 | moves between rooms |
 | `remote_today` | — | — | 0 | laptop stays offline |
 
-Persona schedules drive laptop online/offline and which room the laptop's `ap` reports. Weekday only. The
-simulator uses the real clock; scenarios can force persona actions on demand. Employee names come from a
-fixed fictional list in the dataset.
+Persona schedules drive laptop online/offline and which room the laptop's `ap` reports. Weekday only, read
+as wall-clock time in the platform zone (`TZ`, Asia/Dubai). The simulator follows the tenant's **business
+clock** (§8.1): the real clock unless the time machine has moved it. Scenarios can still force persona
+actions on demand. Employee names come from a fixed fictional list in the dataset.
 
 ### 5.5 Bookings
 
@@ -235,9 +237,9 @@ All under `http://thingsboard:9090` inside compose, `http://localhost:8090` from
 
 | Purpose | Endpoint |
 |---------|----------|
-| Login | `POST /api/auth/login` → `{token, refreshToken}`; refresh `POST /api/auth/token` |
+| Login | `POST /api/auth/login` → `{token, refreshToken}`; refresh `POST /api/auth/token`. Health probe: an unauthenticated `GET /api/auth/login` answers **302** on 4.2.1.1 (not 401); any HTTP status means the server is up |
 | Tenant (sysadmin) | `POST /api/tenant` |
-| Tenant user | `POST /api/user?sendActivationMail=false`, then `GET /api/user/{id}/activationLink` and `POST /api/noauth/activate` with `{activateToken, password}` |
+| Tenant user | `POST /api/user?sendActivationMail=false`, then `GET /api/user/{id}/activationLink` and `POST /api/noauth/activate?sendActivationMail=false` with `{activateToken, password}` (works without SMTP; token contains `-` and `_`) |
 | Device / Asset profile | `POST /api/deviceProfile`, `POST /api/assetProfile` |
 | Device | `POST /api/device?accessToken=<token>` |
 | Asset | `POST /api/asset` |
@@ -248,7 +250,7 @@ All under `http://thingsboard:9090` inside compose, `http://localhost:8090` from
 | Backfill telemetry | `POST /api/plugins/telemetry/DEVICE/{id}/timeseries/ANY` body `[{ts, values:{...}}]` |
 | RPC to device | `POST /api/rpc/oneway/{deviceId}` `{method, params}`; `twoway` when a reply matters (timeout 5 s) |
 | Alarms | `GET /api/alarm/{entityType}/{entityId}`, `POST /api/alarm/{id}/ack` |
-| Rule chain import | `POST /api/ruleChain`, then `POST /api/ruleChain/metadata`, then `POST /api/ruleChain/{id}/root` |
+| Rule chain import | `POST /api/ruleChain` with `root: false` (a second root chain is rejected), then `POST /api/ruleChain/metadata` with `ruleChainId` set, then `POST /api/ruleChain/{id}/root` |
 | Dashboard import | `POST /api/dashboard` with the exported JSON |
 
 ### 6.3 MQTT contract (devices ↔ ThingsBoard)
@@ -271,11 +273,15 @@ A device is **online** while its MQTT session is connected and publishing; **off
 | Profile | Alarm rule | Severity | Cleared when |
 |---------|-----------|----------|--------------|
 | `laptop` | inactivity (activity events routed by the rule chain) | Warning "Asset unreachable" | activity resumes |
-| `ac` | `current_a > nominal_current_a * 1.25` for 10 min (dynamic value from server attribute) | Major "AC current high — check filter" | below 1.1× |
+| `ac` | `current_a > ac_current_alarm_a` for 10 min (dynamic value from the server attribute, pre-computed as 1.25 × `nominal_current_a` by the API when the device is registered) | Major "AC current high" | `current_a < ac_current_clear_a` (1.10 × nominal) |
 | `floor_meter` | `power_w > 75000` for 2 min (building threshold 150 kW is evaluated in the API) | Warning "Peak load" | below |
-| `room_meter` | `power_w > night_baseline_w * 2` between 22:00 and 06:00 | Warning "Night anomaly" | below |
+| `room_meter` | `power_w > night_anomaly_w` (pre-computed as 2 × `night_baseline_w`) for 5 min between 22:00 and 06:00 | Warning "Night anomaly" | below |
 
 The peak threshold is the value changed live during the demo (Phase 5).
+
+Device-profile dynamic values compare against an attribute as is (no arithmetic), so the API writes the derived
+threshold attributes (`ac_current_alarm_a`, `ac_current_clear_a`, `night_anomaly_w`) next to the descriptive ones
+whenever it registers or updates a device.
 
 ### 6.5 Rule chain
 
@@ -350,7 +356,9 @@ ThingsBoard latest values on startup if empty.
   `@platform/shared/behaviours`.
 - Behaviours are pure `step(state, dt, inputs) → {state, telemetry}` functions; a registry holds current
   `power_w` per device so meters can sum. Same functions are imported by the API's backfill CLI.
-- Real clock. `Scheduler` fires persona events. Deterministic randomness via `seedrandom(code)`.
+- Business clock per tenant (§8.1): behaviours are stepped by *virtual* elapsed time, long gaps are
+  sub-stepped (≤ 120 steps per tick), presence is re-evaluated at the new time; **published telemetry
+  timestamps are always real**. Deterministic randomness via `seedrandom(code)`.
 - RPC handler applies state changes and replies; effects appear in the next tick.
 - HTTP control API on `:4100` (Fastify, header `X-Internal-Token`):
 
@@ -359,13 +367,38 @@ ThingsBoard latest values on startup if empty.
 | `POST /devices` | add a virtual device at runtime `{tenant, code, type, accessToken, attrs}` |
 | `DELETE /devices/:code` | remove |
 | `POST /scenario/:name` | `new-laptop-first-boot {code}`, `everyone-leaves`, `late-worker-stays {employeeId}`, `lunch-peak`, `heater-left-on {room}`, `ac-filter-degrade {code}`, `ghost-meeting {room}`, `move-laptop {code, room}` |
-| `POST /time/hint` | `{phase: morning|midday|evening|night}` shifts persona schedules so the demo runs at any hour without moving the clock |
-| `GET /state` | snapshot for debugging |
+| `PUT /clock` | `{tenant, state: ClockState}` pushed by the API when the time machine moves; `GET /clock?tenant=` reads it back |
+| `GET /state` | snapshot for debugging, including every tenant's clock |
+
+### 8.1 Business clock ("time machine", demo mode)
+
+Every tenant has a business clock, owned by the API and stored in Redis (`clock:{tenant}`), shared as
+`@platform/shared/clock`. The state is an anchor `{anchorRealMs, anchorVirtualMs, speed}`: at real time
+`anchorRealMs` the virtual time was `anchorVirtualMs`, advancing at `speed` virtual seconds per real second
+(1 = live, 0 = paused, ≤ 600). Any process computes `virtualNow(state, Date.now())`; nothing ticks.
+
+| Concern | Clock |
+|---------|-------|
+| Persona schedules, appliance habits, bookings "now", automation rules (20:00 sweep, idle minutes, pre-cool lead), morning report date | **business** (`ClockService.now(tenant)` in the API, `Simulation.now(tenant)` in the simulator) |
+| Telemetry `ts`, ThingsBoard inactivity, alarms, dashboards, audit rows, replay stream ids, JWT expiry | **real** |
+
+Commands (`POST /clock`, TENANT_ADMIN, demo mode only; `GET /clock` for every signed-in user of a demo
+tenant): `jumpBy {ms}`, `jumpToTime {time:"HH:MM", dayOffset}` (in the platform zone, on the current virtual
+day), `jumpTo {at}`, `speed {speed}`, `reset`. The API pushes the new state to the simulator first (if that
+fails nothing changes), then persists it and publishes a `clock` live event so every browser's header clock
+follows. The simulator pulls `GET /internal/clock/:tenant` at startup so a restart does not fall back to
+real time mid-demo. The web header always shows the business clock in the tenant zone with a speed or
+pause marker when it differs from real time. The automation engine (Phase 2) must run a tick immediately
+when a `clock` event arrives and shorten its tick interval while `speed > 1`, so "fast forward 10 minutes"
+switches an idle room off within seconds.
 
 ## 9. Automation engine (API)
 
 A BullMQ repeatable job `automations.tick` runs every minute per tenant (one job per tenant, concurrency 1 per
-tenant via a Redis lock). Each automation reads live state from Redis and bookings from Postgres, decides,
+tenant via a Redis lock), plus an immediate tick on every `clock` event and a shorter interval while the
+business clock runs faster than real time (§8.1). Every time comparison in a rule uses the tenant's business
+clock, never `Date.now()`; timestamps kept for idle detection (`empty_since`, `last_seen`) are business
+time. Each automation reads live state from Redis and bookings from Postgres, decides,
 issues commands through `CommandService` (which calls ThingsBoard RPC and records `Command` and `AuditLog`),
 and writes an `AutomationRun`. Manual triggers exist for every automation (`POST /automations/:key/run`), and
 alarm events can enqueue an immediate run. Automations are enabled per tenant; a real tenant starts with all
@@ -448,7 +481,7 @@ gets 403 and a toast.
 |---------|----------------|-----------|
 | thingsboard HTTP | 9090 | 8090 |
 | thingsboard MQTT | 1883 | 1884 |
-| thingsboard internal postgres | 5432 | not exposed |
+| tb-db (core PostgreSQL + TimescaleDB) | 5432 | not exposed |
 | postgres (platform) | 5432 | 5434 |
 | redis | 6379 | 6380 |
 | api (HTTP + WebSocket) | 4000 | 4000 |
@@ -496,6 +529,36 @@ Open `http://alpha.localhost:8081` and `http://beta.localhost:8081`. Scenario co
 | 2026-09-08 | **API framework: plain Fastify 5**, not NestJS and not tRPC. Structure comes from §11 conventions | NestJS: request-scope bubbling, RxJS interceptors and async event-handler pitfalls are permanent guardrails an agent-written codebase would keep tripping on. tRPC: the BRD requires a public REST/OpenAPI surface for non-TypeScript integrators, so tRPC would have meant two API surfaces; team chose one plain surface |
 | 2026-09-08 | Automations live in the API (BullMQ jobs), not in rule chains; alarm thresholds stay in ThingsBoard device profiles | Easier to build and debug; still shows a live no-code edit in ThingsBoard |
 | 2026-09-08 | Real clock only. Scenarios are triggered; history is backfilled with past timestamps and `metadata.backfill=true`; `time/hint` shifts persona schedules | Avoids two-clock bugs; keeps alarms quiet during backfill |
+| 2026-09-10 | **Energy pages are native** (recharts over the API's ThingsBoard history proxy, 30 s Redis cache) instead of embedded ThingsBoard dashboards; `provision` still imports any `thingsboard/dashboards/*.json` and stores ids for later embedding | Dashboard exports cannot be authored reliably without the ThingsBoard UI; native pages are brand-clean, RTL-safe, offline and testable |
+| 2026-09-10 | Root rule chain forwards **"RPC Request to Device"** to a `rpc call request` node; server-side RPC (all platform commands) is dropped otherwise and REST answers 504 | Found in Phase 1 integration; ThingsBoard routes REST RPC through the root chain |
+| 2026-09-10 | Simulator seeds cumulative counters (energy, AC runtime) from `GET /internal/live/:tenant` on start | Restarts must not reset meters; kWh-today math relies on monotonic counters |
+| 2026-09-10 | **Superseded the row above: per-tenant business clock ("time machine", §8.1)** for demo tenants: jump to a time, fast forward, speed up, pause, reset. Only business logic (personas, bookings, automations) follows it; telemetry, ThingsBoard alarms/inactivity, dashboards and audit stay on the real clock. Replaces `time/hint`. All wall-clock rules are read in the platform zone (`TZ`, Asia/Dubai), and the web header shows the business clock in that zone | User request: presenters must be able to show "20:00 sweep" and "10 minutes idle" on demand. The two-clock risk is contained by giving telemetry exactly one clock (real) and business logic exactly one accessor (`now(tenant)`) |
 | 2026-09-08 | Telemetry reaches the API by rule-chain REST call node, not polling | Push, one integration path for events and alarms |
 | 2026-09-08 | Phone view is a responsive web route | Scope |
-| (Phase 0) | Pinned ThingsBoard image tag: **TBD, record here**. Pinned React Router v8 and Fastify minor versions: **TBD** | |
+| 2026-09-08 | Pinned versions: ThingsBoard image **`thingsboard/tb-postgres:4.2.1.1`** (newest 4.x stable on Docker Hub, 2025-12-23), **Fastify 5.12**, **React Router 8.3**, TypeScript 5.9 (not the 7.x Go port), Node 22 in `.nvmrc` (Node 24 also works), pnpm 11.3, Zod 4, Drizzle ORM 0.45 / drizzle-kit 0.31, BullMQ 5, ioredis 5, Socket.IO 4.8, Vite 8, Tailwind 4, Vitest 4 | Newest stable releases at Phase 0; TypeScript 7 and Vitest 5 were days old and skipped for tooling compatibility |
+| 2026-09-08 | `@platform/shared` is compiled to `dist/` and consumed via package `exports` subpaths (`@platform/shared/dto`, `/contracts`, `/behaviours`, `/dataset`, `/roles`); `pnpm build:shared` runs before typecheck/test | Works identically for tsc (api, simulator), Vite (web) and the Docker builds; no path-alias magic |
+| 2026-09-08 | Rule chain → API body is built by TBEL transform nodes fed by an *originator fields* node (`id`→`originatorId`), because the REST-call node's `requestBodyTemplate` only exists from TB 4.3+; the transform sets `type` to a platform event kind (`telemetry`, `attributes`, `activity`, `inactivity`, `connect`, `disconnect`, `alarm_created`, `alarm_updated`, `alarm_cleared`). Schema: `TbEventPayloadSchema` in shared | Pinned image is 4.2.1.1 |
+| 2026-09-08 | The web calls the API only via `/api/*` (nginx and the Vite dev proxy strip the prefix; API routes are mounted at the root so the rule chain can post to `http://api:4000/internal/tb/events`) and `/socket.io/`. `Branding.logoUrl` is API-relative | One origin per tenant hostname, no CORS in production |
+| 2026-09-08 | Database roles `app` (RLS) and `app_admin` (BYPASSRLS) are created with passwords by the compose Postgres init script from `.env`; the initial migration creates them idempotently *without* passwords as a fallback and grants privileges | Keeps passwords out of committed SQL |
+| 2026-09-08 | Desks are stored inside the open-plan room's `Location.geometry.desks` (no desk table); `2.E` from §5.2 is modelled as the `2.East` zone, not a room | Fewer tables for Phase 0; the floor plan reads one payload |
+| 2026-09-10 | **Platform console at `http://localhost:8081/admin`**: tenant-less `/admin/*` API routes guarded by `requirePlatformAdmin` (tokens carry `scope: 'platform'`, never a tenant), a `platform_admins` table outside RLS, the first operator seeded from `PLATFORM_ADMIN_EMAIL` / `PLATFORM_ADMIN_PASSWORD`, and provisioning run as Redis-backed jobs that answer 202 + a job id the UI polls. Brand assets became `{ mime, content }` (SVG markup or base64) served at `/branding/logo` and `/branding/favicon` | Tenants could only be created from the CLI. Every tenant route resolves its tenant from `Host`, so the console cannot live on a tenant hostname; the bare host is the one place with no tenant. Provisioning talks to ThingsBoard and takes tens of seconds, too long for one request |
+| 2026-09-10 | **Emails are plain branded HTML built by typed template functions** (`api/src/templates/email/*.ts`) sent with `nodemailer`; no react-email. Brand colours and name come from `Tenant.brand`; raster logos inline, SVG logos fall back to the name | react-email would add React and a build step to the API for two templates; string templates are testable, RTL-safe and already brand-clean |
+| 2026-09-10 | **The morning report is produced by the automation tick** (worker) once the business clock passes 07:00 and no report exists for the business date, not by a cron job | It must follow the time machine like every other 07:00 rule; a cron would fire on the real clock |
+| 2026-09-10 | **Once-a-day automations (evening sweep, holiday sweep) remember the business day they acted on in Redis** (`automations:{tenant}:{key}:actedDay`); manual runs ignore the time gate and a zone-scoped run ("Leaving now") does not count as the day's sweep. **Peak-shedding state** (`NORMAL → SHEDDING(level) → RECOVERING`, with the undo commands per step) is persisted the same way | Rules stay pure: the engine passes the markers in the context and persists what the rule returns as a `summary` decision |
+| 2026-09-10 | **Presence keeps `sensorOccupied` next to `occupied`**, so "Leaving now" can drop one person's laptops from a room without losing what the sensor says | Needed to sweep the late worker's own zone while their laptop is still online |
+| 2026-09-10 | **Dataset users are linked to people**: `ops@` is the first `late_worker`, `field@` the first `early_bird`, `admin@` E001 (`DATASET_USERS.employee`) | Person-directed notifications (late worker) need a signed-in phone; the demo presenter uses the ops account |
+| 2026-09-10 | `zonedDayKey` returns zero-padded `YYYY-MM-DD` | It is compared with ISO dates (holiday lists, report periods); the unpadded form never matched |
+| 2026-09-10 | **Backfill writes history over REST** (`POST /api/plugins/telemetry/DEVICE/{id}/timeseries/ANY`, ≤1000 points per request, three requests in flight) and therefore never touches the rule chain: no alarms, no `/internal/tb/events` traffic, no `metadata.backfill` filter needed. Cumulative counters are handed to the simulator through a one-shot override served by `GET /internal/live/:tenant`, so the operator restarts the simulator after a backfill | The REST telemetry controller saves straight to the timeseries store; unthrottled bulk writes (every device fills its buffer in the same slot) stalled the core and even the live rule chain, and a CPU-bound loop must yield to the event loop for in-flight responses |
+| 2026-09-10 | **The IoT core refuses aggregations over ~700 buckets** ("Number of intervals is too high"); hourly history is read in 14-day chunks (`SavingsService`) | Found while reading the 12-week baseline |
+| 2026-09-10 | **AC health drift is current per watt** (mean current ÷ mean power, last 24 h against a 3-day window two weeks earlier), not mean current | Mean current alone reflects the duty cycle of the day; the filter story is more current for the same output |
+| 2026-09-10 | **Night statistics and monthly report snapshots are produced by the automation tick** (once the business clock passes 06:00, and on the first business day of a month), like the morning report | Everything scheduled follows the time machine |
+| 2026-09-10 | **Utilisation heatmap comes from `room_hourly_stats`** (occupied and booked minutes per room, date and hour), filled by the waste tick and the backfill | `RoomDailyStat` alone cannot give hour × weekday |
+| 2026-09-10 | The standby hunt excludes fridges (60 W is their duty, not standby) and reads `device_nightly_stats` for the last 7 nights: flagged when 5–80 W and ≥ 6 h above 5 W on ≥ 5 nights | The monitors (6 W) and the coffee machine (8 W) are the intended finds |
+| 2026-09-10 | **PDFs are drawn with pdfkit** in the API process (brand band, title, stat tiles, tables, footer), served at `GET /reports/:id/pdf` and `GET /assets/export.pdf` and attached to the monthly report email; no Playwright or Chromium in the API image. Latin fonts only, so Arabic content is not rendered in PDFs | Chromium adds ~400 MB and a second rendering path for four report layouts; the same plan structure feeds tests and the brand audit |
+| 2026-09-10 | **Audit view reads `audit_log` through `AuditQueryService`** (`GET /audit`, `/audit/facets`, `/audit/export.csv`); filters by actor, action (prefix with a trailing dot), entity type and time; the web shows a before/after diff with changed keys highlighted | Requirement 4 of Phase 5 |
+| 2026-09-10 | **Backup and restore are shell scripts** (`deploy/backup.sh`, `deploy/restore.sh`, `make backup` / `make restore FILE=`): `pg_dump --format=custom` of the platform database plus tarballs of the IoT core volumes taken while the core is stopped | Volumes cannot be copied consistently while the core writes; a CLI command would need Docker access from inside a container |
+| 2026-09-10 | **RBAC is tested per route** (`api/test/rbac.test.ts` iterates one representative route per access key for every role). Schema validation runs before the role hook in Fastify, so a *malformed* request from an unauthorised role answers 400 instead of 403; the probes therefore send valid bodies. Field operators are not restricted to their floor (not in the matrix) | Found while writing the test; the floor scoping from the phase file was never designed into the matrix |
+| 2026-09-10 | The i18n parity test compares English and Arabic keys with plural suffixes stripped and asserts no vendor names in either bundle | Arabic has more plural forms than English |
+| 2026-09-10 | **Redis subscriber connections are created with `enableReadyCheck: false`** (`container.ts`, the socket.io adapter's subscriber in `plugins/live.ts`) and log their errors | The boot-time "Connection in subscriber mode, only subscriber commands may be used" warning the earlier handover called noise was the API's `events:*` subscriber failing its INFO ready check and dying: Redis showed only the socket.io adapter's pattern subscription and browsers received no live events at all (floor-plan dots, presence, clock, notifications and sweep banner were static). Found by the Phase 5 e2e new-employee test |
+| 2026-09-11 | **The IoT core runs `thingsboard/tb-node:4.2.1.1` against its own `timescale/timescaledb:2.24.0-pg16` database (`tb-db`) with `DATABASE_TS_TYPE=timescale`**, replacing the `tb-postgres` image with the bundled database. Two one-shot compose services run before the core: `tb-db-probe` (psql, checks for the sysadmin row) and `tb-install` (`INSTALL_TB=true` on a fresh database only). The core keeps `HTTP_BIND_PORT=9090`, so `TB_URL`, the rule chain and the ports table are unchanged; the platform database stays separate. Backups copy the `tb-db-data` volume | User decision: TimescaleDB is the historian in the client's Smart Building stack, and the core supports it without modification; the `tb-node` image has no auto-install, so the probe replaces the bundled image's "empty /data/db" check. Existing demo data is re-created with `provision`, `dataset` and `backfill` |
+| 2026-09-11 | **Server deployment = the same compose file plus `deploy/docker-compose.prod.yml` (Caddy) chosen through `COMPOSE_FILE` in `.env`.** Caddy issues on-demand certificates for tenant hostnames after asking `GET /health/hostname?domain=` (200 for `PLATFORM_HOST` and existing tenant hostnames); the console and API hosts are explicit sites. New env `PLATFORM_HOST` replaces the hard-coded `.localhost` default for new tenants (provision, admin service, console form via `GET /admin/platform`). Internal host ports are bound to `127.0.0.1` through the existing `*_PORT` variables. Deployed by `.github/workflows/deploy-platform.yml` over SSH (rsync, `.env` from the `ENV_FILE` secret, build on the server, `deploy/deploy.sh`), demo hosts `dcs.verysell.ai`, `*.dcs.verysell.ai`, `api-dcs.verysell.ai` | Wildcard certificates for a second-level name need a paid CDN plan or DNS API access; on-demand TLS needs neither and keeps "no per-tenant configuration". nginx now forwards the proxy's `X-Forwarded-Proto` so console links stay https |

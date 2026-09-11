@@ -1,6 +1,6 @@
 # Plan: Smart Office Demo on the platform foundation (Asset + Energy Management, white-labelled)
 
-Status: **Draft, awaiting boss sign-off** (2026-09-08)
+Status: **Done: Phases 0–5 (2026-09-10)**; rehearse with `docs/demo/runbook.md`. User decision 2026-09-10: implement Phases 1–5.
 Owner: Vu Nguyen. Executing agents: read [context.md](context.md) first, then the phase file you are assigned.
 
 ## Outcome
@@ -33,8 +33,9 @@ requirements it answers are in [../../docs/requirements/](../../docs/requirement
 ## Non-goals for this milestone
 
 Warehouse, retail, healthcare, mustering, CAFM work orders, water, video wall, Keycloak/SSO, native mobile,
-real hardware, time acceleration of the live clock (history is backfilled instead), production hardening
-(HA, secrets manager, backups beyond a dump script).
+real hardware, time acceleration of *telemetry* (history is backfilled instead; the business clock can be
+moved with the time machine, context.md §8.1), production hardening (HA, secrets manager, backups beyond a
+dump script).
 
 ## Phases
 

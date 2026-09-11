@@ -1,6 +1,6 @@
 # Phase 1 — Things and states (ladder Levels 0–1)
 
-Status: Not started
+Status: Done (2026-09-10), see [reports/phase-1-things-and-states.md](reports/phase-1-things-and-states.md)
 Depends on: Phase 0 done. Read [context.md](context.md) §5, §6, §7, §10.
 
 ## Context
@@ -76,8 +76,8 @@ Tracks: **A** dataset geometry + dashboards + CLI; **B** simulator bookings/occu
 5. **Web**: routes above using loaders for initial data and TanStack Query for mutations and live refresh.
    `TbDashboardFrame` fetches the embed URL and renders the iframe with a placeholder while loading. Asset
    drawer tabs: Overview, Live, History, Custody, Actions, Audit.
-6. **Console additions**: laptop picker for "First boot", "Ghost meeting in room …" (used in Phase 2),
-   time hint.
+6. **Console additions**: laptop picker for "First boot", "Ghost meeting in room …" (used in Phase 2). The
+   time machine card (context.md §8.1) already exists; bookings "now" must use the business clock.
 
 ## Validation
 

@@ -1,14 +1,14 @@
 # Phase 3 — Whole-office automation (ladder Level 3)
 
-Status: Not started
+Status: Done (2026-09-10), see [reports/phase-3-automation.md](reports/phase-3-automation.md)
 Depends on: Phase 2 done (automation engine, presence, commands). Read [context.md](context.md) §9, §10.
 
 ## Context
 
 This phase delivers the signature scenario, the **8 PM sweep**, and its siblings: late-worker zone, pre-cool,
 lunch peak shedding, holiday mode and the night anomaly. All run on the Phase 2 engine. The demo must be able
-to run "the evening" at any time of day, so every automation has a manual trigger and the simulator has the
-`time/hint` and `everyone-leaves` scenarios.
+to run "the evening" at any time of day, so every automation has a manual trigger and the console has the
+time machine (context.md §8.1: jump to 19:55, fast forward) and the `everyone-leaves` scenario.
 
 ## Requirements and acceptance criteria
 
@@ -38,7 +38,9 @@ to run "the evening" at any time of day, so every automation has a manual trigge
    assets sorted by current power so the culprit (a 1500 W plug, the "heater") is first. Console scenario
    `heater-left-on {room}`.
 8. **Console** gains: Everyone leaves, Late worker stays (pick employee), Run evening sweep now, Lunch peak,
-   Heater left on in room …, Generate morning report now, Time hint.
+   Heater left on in room …, Generate morning report now. `evening_sweep` fires from the business clock, so
+   "Jump to 19:55" then speed 10× shows the sweep happen by itself; `time: "20:00"` is compared in the
+   platform zone and the sweep runs at most once per virtual day.
 9. Tests: sweep decision table (each reason), zone keeping, hold/snooze, shedding order and restore, holiday
    date handling, anomaly culprit ordering.
 
@@ -54,7 +56,7 @@ platform/api/src/templates/email/{Base.tsx, MorningReport.tsx}   react-email, br
 platform/api/src/routes/console/index.ts                    more scenarios
 platform/shared/src/dto/{reports,notifications}.ts
 platform/api/drizzle/0003_*.sql                           report kind MORNING, holds if not present
-platform/simulator/src/scenarios.ts                        everyone-leaves, late-worker-stays, lunch-peak, heater-left-on, time/hint
+platform/simulator/src/scenarios.ts                        everyone-leaves, late-worker-stays, lunch-peak, heater-left-on
 platform/web/app/routes/{m,_shell.reports.mornings,_shell.automations (event override)}.tsx
 platform/web/app/components/{sweep-wave,shed-panel}.tsx
 ```
@@ -74,7 +76,7 @@ platform/web/app/components/{sweep-wave,shed-panel}.tsx
    PDF in Phase 5.
 6. **Simulator scenarios**: `everyone-leaves` sets all personas to left-for-today except a given late worker;
    `lunch-peak` forces all AC to max and pantry plugs on for 10 min; `heater-left-on` adds 1500 W to a plug in
-   the room; `time/hint evening` shifts persona schedules so "now" behaves like 19:45.
+   the room. Scenario timers (`lunch-peak` 10 min, first-boot 60 s) are expressed in business time.
 7. **Phone view**: `/m` shows the logged-in user's notifications with action buttons over WebSocket; works on a phone
    browser pointed at the demo box. Because `*.localhost` does not resolve on a phone, the API accepts
    `X-Tenant-Key` (sent by the web when the URL has `?tenant=alpha`) only for tenants in demo mode; document in
@@ -83,7 +85,8 @@ platform/web/app/components/{sweep-wave,shed-panel}.tsx
 
 ## Validation
 
-- From `/console`: Time hint evening → Everyone leaves → Late worker stays <employee> → Run evening sweep now.
+- From `/console`: Time machine "Jump to 19:55" → Late worker stays <employee> → speed 10× (or Run evening
+  sweep now).
   Expected: all non-critical rooms off except that employee's zone; skip reasons listed; the notification
   appears on `/m`; tapping "Leaving now" darkens the zone; `2.S` untouched; audit rows for every command with
   `source=AUTOMATION` and the run id.
