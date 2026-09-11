@@ -7,6 +7,7 @@ plans
 e2e/audit
 e2e/test-results
 e2e/playwright-report
+e2e/live-report
 dist
 build
 .react-router

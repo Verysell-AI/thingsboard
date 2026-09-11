@@ -4,6 +4,7 @@ build/
 .react-router/
 coverage/
 playwright-report/
+live-report/
 test-results/
 .env
 .env.*

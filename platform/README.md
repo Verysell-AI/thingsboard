@@ -203,6 +203,13 @@ pnpm test && pnpm lint && pnpm typecheck
   and reports horizontal overflow, clipped or squeezed content, console errors and failed requests, with
   screenshots in `e2e/audit/`.
 - **`make e2e` needs a browser once**: `pnpm --filter @platform/e2e exec playwright install chromium`.
+- **`make e2e-live` checks a deployed platform** (`e2e/live/`): platform-console sign-in, tenant hostnames,
+  creating a tenant with the office-demo dataset, then the demo scenarios on that tenant. Set
+  `LIVE_PLATFORM_HOST` (e.g. `dcs.verysell.ai`), `LIVE_TENANT` (default `gamma`), `PLATFORM_ADMIN_EMAIL`,
+  `PLATFORM_ADMIN_PASSWORD` and `DATASET_USER_PASSWORD` from the server's `.env`. A tenant that already
+  exists is kept; `LIVE_DELETE_TENANT=1` removes it in the last test. The live checks on the floor plan
+  expect the office to be open, so the suite moves the tenant's business clock to 08:45 first and back to
+  real time at the end.
 - **Office time zone**: persona schedules and automations use `TZ` from `.env` (default `Asia/Dubai`); set it
   to your own zone when developing so laptops come online during your working hours.
 

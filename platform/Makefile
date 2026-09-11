@@ -82,6 +82,9 @@ typecheck: ## TypeScript checks across the workspace
 e2e: ## Playwright tests against the running stack
 	pnpm --filter @platform/e2e e2e
 
+e2e-live: ## Live checks against a deployed platform (LIVE_PLATFORM_HOST, LIVE_TENANT, PLATFORM_ADMIN_*, DATASET_USER_PASSWORD)
+	cd e2e && npx playwright test -c playwright.live.config.ts $(ARGS)
+
 ui-audit: ## Visit every route at four viewport sizes and report layout defects (BASE_URL=http://alpha.localhost:8081)
 	cd e2e && node tools/ui-audit.mjs --base $(or $(BASE_URL),http://alpha.localhost:8081) --out ./audit
 
