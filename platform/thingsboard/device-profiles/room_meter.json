@@ -1,0 +1,161 @@
+{
+  "name": "room_meter",
+  "description": "Room sub-meter",
+  "image": null,
+  "default": false,
+  "type": "DEFAULT",
+  "transportType": "DEFAULT",
+  "provisionType": "DISABLED",
+  "defaultRuleChainId": null,
+  "defaultDashboardId": null,
+  "defaultQueueName": null,
+  "provisionDeviceKey": null,
+  "firmwareId": null,
+  "softwareId": null,
+  "defaultEdgeRuleChainId": null,
+  "profileData": {
+    "configuration": {
+      "type": "DEFAULT"
+    },
+    "transportConfiguration": {
+      "type": "DEFAULT"
+    },
+    "provisionConfiguration": {
+      "type": "DISABLED"
+    },
+    "alarms": [
+      {
+        "id": "night-anomaly",
+        "alarmType": "Night anomaly",
+        "createRules": {
+          "WARNING": {
+            "condition": {
+              "condition": [
+                {
+                  "key": {
+                    "type": "TIME_SERIES",
+                    "key": "power_w"
+                  },
+                  "valueType": "NUMERIC",
+                  "value": null,
+                  "predicate": {
+                    "type": "NUMERIC",
+                    "operation": "GREATER",
+                    "value": {
+                      "defaultValue": 500,
+                      "userValue": null,
+                      "dynamicValue": {
+                        "sourceType": "CURRENT_DEVICE",
+                        "sourceAttribute": "night_anomaly_w",
+                        "inherit": false
+                      }
+                    }
+                  }
+                }
+              ],
+              "spec": {
+                "type": "DURATION",
+                "unit": "MINUTES",
+                "predicate": {
+                  "defaultValue": 5,
+                  "userValue": null,
+                  "dynamicValue": null
+                }
+              }
+            },
+            "schedule": {
+              "type": "CUSTOM",
+              "timezone": "Asia/Dubai",
+              "items": [
+                {
+                  "enabled": true,
+                  "dayOfWeek": 1,
+                  "startsOn": 79200000,
+                  "endsOn": 21600000
+                },
+                {
+                  "enabled": true,
+                  "dayOfWeek": 2,
+                  "startsOn": 79200000,
+                  "endsOn": 21600000
+                },
+                {
+                  "enabled": true,
+                  "dayOfWeek": 3,
+                  "startsOn": 79200000,
+                  "endsOn": 21600000
+                },
+                {
+                  "enabled": true,
+                  "dayOfWeek": 4,
+                  "startsOn": 79200000,
+                  "endsOn": 21600000
+                },
+                {
+                  "enabled": true,
+                  "dayOfWeek": 5,
+                  "startsOn": 79200000,
+                  "endsOn": 21600000
+                },
+                {
+                  "enabled": true,
+                  "dayOfWeek": 6,
+                  "startsOn": 79200000,
+                  "endsOn": 21600000
+                },
+                {
+                  "enabled": true,
+                  "dayOfWeek": 7,
+                  "startsOn": 79200000,
+                  "endsOn": 21600000
+                }
+              ],
+              "dynamicValue": null
+            },
+            "alarmDetails": "Room draws more than twice its night baseline.",
+            "dashboardId": null
+          }
+        },
+        "clearRule": {
+          "condition": {
+            "condition": [
+              {
+                "key": {
+                  "type": "TIME_SERIES",
+                  "key": "power_w"
+                },
+                "valueType": "NUMERIC",
+                "value": null,
+                "predicate": {
+                  "type": "NUMERIC",
+                  "operation": "LESS_OR_EQUAL",
+                  "value": {
+                    "defaultValue": 500,
+                    "userValue": null,
+                    "dynamicValue": {
+                      "sourceType": "CURRENT_DEVICE",
+                      "sourceAttribute": "night_anomaly_w",
+                      "inherit": false
+                    }
+                  }
+                }
+              }
+            ],
+            "spec": {
+              "type": "SIMPLE"
+            }
+          },
+          "schedule": {
+            "type": "ANY_TIME"
+          },
+          "alarmDetails": null,
+          "dashboardId": null
+        },
+        "propagate": false,
+        "propagateToOwner": false,
+        "propagateToTenant": false,
+        "propagateRelationTypes": null
+      }
+    ]
+  }
+}

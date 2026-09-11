@@ -1,0 +1,269 @@
+# Whole platform on one machine. Fixed host ports (see README) never collide with the local
+# ThingsBoard dev setup on 8080/5433/1883. Copy .env.example to .env first (make up does it).
+name: platform
+
+x-api-image: &api-image
+  build:
+    context: .
+    dockerfile: deploy/Dockerfile.api
+  image: platform/api:local
+
+x-api-env: &api-env
+  NODE_ENV: production
+  TZ: ${TZ:-Asia/Dubai}
+  API_PORT: '4000'
+  API_URL: http://api:4000
+  API_PUBLIC_URL: ${API_PUBLIC_URL:-http://localhost:4000}
+  TB_URL: http://thingsboard:9090
+  TB_PUBLIC_URL: ${TB_PUBLIC_URL:-http://localhost:8090}
+  TB_SYSADMIN_EMAIL: ${TB_SYSADMIN_EMAIL:-sysadmin@thingsboard.org}
+  TB_SYSADMIN_PASSWORD: ${TB_SYSADMIN_PASSWORD}
+  TB_SERVICE_PASSWORD: ${TB_SERVICE_PASSWORD}
+  TENANT_DOMAIN: ${TENANT_DOMAIN:-demo}
+  PLATFORM_HOST: ${PLATFORM_HOST:-localhost}
+  DATABASE_URL: postgres://app:${DB_APP_PASSWORD}@postgres:5432/${POSTGRES_DB:-platform}
+  DATABASE_ADMIN_URL: postgres://app_admin:${DB_ADMIN_PASSWORD}@postgres:5432/${POSTGRES_DB:-platform}
+  REDIS_URL: redis://redis:6379
+  SIMULATOR_URL: http://simulator:4100
+  SMTP_URL: smtp://mailpit:1025
+  MAIL_FROM: ${MAIL_FROM:-no-reply@platform.local}
+  JWT_SECRET: ${JWT_SECRET}
+  JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
+  JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-7d}
+  INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN}
+  DATASET_USER_PASSWORD: ${DATASET_USER_PASSWORD}
+  PLATFORM_ADMIN_EMAIL: ${PLATFORM_ADMIN_EMAIL:-admin@platform.local}
+  PLATFORM_ADMIN_PASSWORD: ${PLATFORM_ADMIN_PASSWORD:-}
+  DATASETS_DIR: /app/datasets
+  TB_ARTEFACTS_DIR: /app/thingsboard
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+
+x-tb-env: &tb-env
+  TB_SERVICE_TYPE: monolith
+  TB_QUEUE_TYPE: in-memory
+  # Keep the HTTP port the tb-postgres image used so TB_URL and the rule chain stay unchanged
+  HTTP_BIND_PORT: '9090'
+  # The core's own database (service tb-db): PostgreSQL with the TimescaleDB extension.
+  # Entities stay in ordinary tables; timeseries go to the ts_kv hypertable (DATABASE_TS_TYPE=timescale).
+  SPRING_DATASOURCE_URL: jdbc:postgresql://tb-db:5432/${TB_DB_NAME:-thingsboard}
+  SPRING_DATASOURCE_USERNAME: ${TB_DB_USER:-postgres}
+  SPRING_DATASOURCE_PASSWORD: ${TB_DB_PASSWORD}
+  DATABASE_TS_TYPE: timescale
+  # Faster device Inactive detection so laptops go offline within ~30 s of their last message
+  DEFAULT_INACTIVITY_TIMEOUT: '30'
+  DEFAULT_STATE_CHECK_INTERVAL: '10'
+  # Keep attribute values typed as sent (room codes like "1.1" must stay strings)
+  JSON_TYPE_CAST_ENABLED: 'false'
+
+services:
+  tb-db:
+    image: ${TB_DB_IMAGE:-timescale/timescaledb:2.24.0-pg16}
+    restart: unless-stopped
+    # Not exposed on the host on purpose: only the core talks to it (the platform database is `postgres`).
+    environment:
+      POSTGRES_DB: ${TB_DB_NAME:-thingsboard}
+      POSTGRES_USER: ${TB_DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${TB_DB_PASSWORD}
+    volumes:
+      - tb-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${TB_DB_USER:-postgres} -d ${TB_DB_NAME:-thingsboard}']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # One-shot: checks whether the core schema exists (needs psql, so it runs in the database image).
+  tb-db-probe:
+    image: ${TB_DB_IMAGE:-timescale/timescaledb:2.24.0-pg16}
+    restart: 'no'
+    entrypoint: ['/bin/sh', '/tb-db-probe.sh']
+    environment:
+      PGHOST: tb-db
+      PGDATABASE: ${TB_DB_NAME:-thingsboard}
+      PGUSER: ${TB_DB_USER:-postgres}
+      PGPASSWORD: ${TB_DB_PASSWORD}
+    volumes:
+      - ./deploy/tb-db-probe.sh:/tb-db-probe.sh:ro
+      - tb-install-state:/state
+    depends_on:
+      tb-db:
+        condition: service_healthy
+
+  # One-shot: installs the core schema and system data on a fresh database (INSTALL_TB), else exits.
+  tb-install:
+    image: ${TB_IMAGE:-thingsboard/tb-node:4.2.1.1}
+    restart: 'no'
+    entrypoint: ['/bin/bash', '/tb-install.sh']
+    environment:
+      <<: *tb-env
+    volumes:
+      - ./deploy/tb-install.sh:/tb-install.sh:ro
+      - tb-install-state:/state
+      - tb-logs:/var/log/thingsboard
+    depends_on:
+      tb-db-probe:
+        condition: service_completed_successfully
+
+  thingsboard:
+    image: ${TB_IMAGE:-thingsboard/tb-node:4.2.1.1}
+    restart: unless-stopped
+    ports:
+      - '${TB_HTTP_PORT:-8090}:9090'
+      - '${TB_MQTT_PORT:-1884}:1883'
+    environment:
+      <<: *tb-env
+    volumes:
+      - tb-logs:/var/log/thingsboard
+    depends_on:
+      tb-db:
+        condition: service_healthy
+      tb-install:
+        condition: service_completed_successfully
+    healthcheck:
+      # An unauthenticated GET on the login endpoint answers 302 (redirect to the UI) once the web layer
+      # is up; any HTTP status line means the server is serving.
+      # The image has neither wget nor curl, so bash opens the socket itself.
+      test:
+        [
+          'CMD',
+          'bash',
+          '-c',
+          'exec 3<>/dev/tcp/localhost/9090 && printf "GET /api/auth/login HTTP/1.0\r\nHost: localhost\r\n\r\n" >&3 && head -n1 <&3 | grep -qE "HTTP/1\.[01] (200|302|401|405)"',
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 40
+      start_period: 120s
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - '${POSTGRES_PORT:-5434}:5432'
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-platform}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DB_APP_PASSWORD: ${DB_APP_PASSWORD}
+      DB_ADMIN_PASSWORD: ${DB_ADMIN_PASSWORD}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+      - ./deploy/postgres-init.sh:/docker-entrypoint-initdb.d/10-roles.sh:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-platform}']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '${REDIS_PORT:-6380}:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - '${MAILPIT_UI_PORT:-8025}:8025'
+      - '${MAILPIT_SMTP_PORT:-1025}:1025'
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: '1'
+      MP_SMTP_AUTH_ALLOW_INSECURE: '1'
+
+  api:
+    <<: *api-image
+    restart: unless-stopped
+    command: ['node', 'dist/server.js']
+    env_file: .env
+    environment:
+      <<: *api-env
+    ports:
+      - '${API_PORT:-4000}:4000'
+    volumes:
+      - ./datasets:/app/datasets:ro
+      - ./thingsboard:/app/thingsboard:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      thingsboard:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://localhost:4000/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  worker:
+    <<: *api-image
+    restart: unless-stopped
+    command: ['node', 'dist/worker.js']
+    env_file: .env
+    environment:
+      <<: *api-env
+    volumes:
+      - ./datasets:/app/datasets:ro
+      - ./thingsboard:/app/thingsboard:ro
+    depends_on:
+      api:
+        condition: service_healthy
+
+  simulator:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.simulator
+    image: platform/simulator:local
+    restart: unless-stopped
+    command: ['node', 'dist/main.js']
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      TZ: ${TZ:-Asia/Dubai}
+      SIMULATOR_PORT: '4100'
+      SIM_MQTT_URL: mqtt://thingsboard:1883
+      API_URL: http://api:4000
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN}
+      SIM_TENANTS: ${SIM_TENANTS:-alpha,beta}
+      SIM_DATASET: ${SIM_DATASET:-office-demo}
+      SIM_TICK_MS: ${SIM_TICK_MS:-10000}
+      DATASETS_DIR: /app/datasets
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - '${SIMULATOR_PORT:-4100}:4100'
+    volumes:
+      - ./datasets:/app/datasets:ro
+    depends_on:
+      thingsboard:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.web
+    image: platform/web:local
+    restart: unless-stopped
+    ports:
+      - '${WEB_PORT:-8081}:80'
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  tb-db-data:
+  tb-install-state:
+  tb-logs:
+  pg-data:
+  redis-data:

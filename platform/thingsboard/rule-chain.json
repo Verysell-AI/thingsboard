@@ -1,0 +1,521 @@
+{
+  "ruleChain": {
+    "name": "Platform root",
+    "type": "CORE",
+    "root": false,
+    "debugMode": false,
+    "configuration": null,
+    "additionalInfo": {
+      "description": "Saves telemetry and attributes, evaluates device-profile alarms and forwards every event to the platform API."
+    }
+  },
+  "metadata": {
+    "firstNodeIndex": 0,
+    "nodes": [
+      {
+        "type": "org.thingsboard.rule.engine.metadata.TbGetOriginatorFieldsNode",
+        "name": "Originator fields",
+        "debugMode": false,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 1,
+        "configuration": {
+          "fetchTo": "METADATA",
+          "dataMapping": {
+            "id": "originatorId",
+            "name": "originatorName",
+            "type": "originatorType"
+          },
+          "ignoreNullStrings": false
+        },
+        "additionalInfo": {
+          "layoutX": 260,
+          "layoutY": 400,
+          "description": ""
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
+        "name": "Message type switch",
+        "debugMode": false,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "version": 0
+        },
+        "additionalInfo": {
+          "layoutX": 260,
+          "layoutY": 150,
+          "description": ""
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "Is backfill?",
+        "debugMode": false,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "TBEL",
+          "jsScript": "return metadata.backfill === \"true\";",
+          "tbelScript": "return metadata.backfill == \"true\";"
+        },
+        "additionalInfo": {
+          "layoutX": 560,
+          "layoutY": 60,
+          "description": ""
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
+        "name": "Save backfill timeseries",
+        "debugMode": false,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 1,
+        "configuration": {
+          "defaultTTL": 0,
+          "useServerTs": false,
+          "processingSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          }
+        },
+        "additionalInfo": {
+          "layoutX": 860,
+          "layoutY": 20,
+          "description": ""
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
+        "name": "Save timeseries",
+        "debugMode": false,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 1,
+        "configuration": {
+          "defaultTTL": 0,
+          "useServerTs": false,
+          "processingSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          }
+        },
+        "additionalInfo": {
+          "layoutX": 860,
+          "layoutY": 120,
+          "description": ""
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.profile.TbDeviceProfileNode",
+        "name": "Device profile",
+        "debugMode": false,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 1,
+        "configuration": {
+          "persistAlarmRulesState": false,
+          "fetchAlarmRulesStateOnStart": false
+        },
+        "additionalInfo": {
+          "layoutX": 1160,
+          "layoutY": 120,
+          "description": ""
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
+        "name": "Save attributes",
+        "debugMode": false,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 3,
+        "configuration": {
+          "processingSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          },
+          "scope": "CLIENT_SCOPE",
+          "notifyDevice": false,
+          "sendAttributesUpdatedNotification": false,
+          "updateAttributesOnlyOnValueChange": true
+        },
+        "additionalInfo": {
+          "layoutX": 860,
+          "layoutY": 260,
+          "description": ""
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.rpc.TbSendRPCReplyNode",
+        "name": "RPC reply",
+        "debugMode": false,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "serviceIdMetaDataAttribute": "serviceId",
+          "sessionIdMetaDataAttribute": "sessionId",
+          "requestIdMetaDataAttribute": "requestId"
+        },
+        "additionalInfo": {
+          "layoutX": 560,
+          "layoutY": 700,
+          "description": ""
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Event: telemetry",
+        "debugMode": false,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "TBEL",
+          "jsScript": "var ts = metadata.ts != null ? Number(metadata.ts) : Date.now();\nreturn { msg: { type: 'telemetry', originator: { id: metadata.originatorId, entityType: 'DEVICE', name: metadata.originatorName, type: metadata.originatorType }, ts: ts, data: msg, metadata: metadata }, metadata: metadata, msgType: msgType };",
+          "tbelScript": "var ts = metadata.ts != null ? Long.parseLong(metadata.ts) : new Date().getTime();\nvar body = { type: 'telemetry', originator: { id: metadata.originatorId, entityType: 'DEVICE', name: metadata.originatorName, type: metadata.originatorType }, ts: ts, data: msg, metadata: metadata };\nreturn { msg: body, metadata: metadata, msgType: msgType };"
+        },
+        "additionalInfo": {
+          "layoutX": 1460,
+          "layoutY": 20,
+          "description": ""
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Event: attributes",
+        "debugMode": false,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "TBEL",
+          "jsScript": "var ts = metadata.ts != null ? Number(metadata.ts) : Date.now();\nreturn { msg: { type: 'attributes', originator: { id: metadata.originatorId, entityType: 'DEVICE', name: metadata.originatorName, type: metadata.originatorType }, ts: ts, data: msg, metadata: metadata }, metadata: metadata, msgType: msgType };",
+          "tbelScript": "var ts = metadata.ts != null ? Long.parseLong(metadata.ts) : new Date().getTime();\nvar body = { type: 'attributes', originator: { id: metadata.originatorId, entityType: 'DEVICE', name: metadata.originatorName, type: metadata.originatorType }, ts: ts, data: msg, metadata: metadata };\nreturn { msg: body, metadata: metadata, msgType: msgType };"
+        },
+        "additionalInfo": {
+          "layoutX": 1460,
+          "layoutY": 90,
+          "description": ""
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Event: activity",
+        "debugMode": false,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "TBEL",
+          "jsScript": "var ts = metadata.ts != null ? Number(metadata.ts) : Date.now();\nreturn { msg: { type: 'activity', originator: { id: metadata.originatorId, entityType: 'DEVICE', name: metadata.originatorName, type: metadata.originatorType }, ts: ts, data: msg, metadata: metadata }, metadata: metadata, msgType: msgType };",
+          "tbelScript": "var ts = metadata.ts != null ? Long.parseLong(metadata.ts) : new Date().getTime();\nvar body = { type: 'activity', originator: { id: metadata.originatorId, entityType: 'DEVICE', name: metadata.originatorName, type: metadata.originatorType }, ts: ts, data: msg, metadata: metadata };\nreturn { msg: body, metadata: metadata, msgType: msgType };"
+        },
+        "additionalInfo": {
+          "layoutX": 1460,
+          "layoutY": 160,
+          "description": ""
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Event: inactivity",
+        "debugMode": false,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "TBEL",
+          "jsScript": "var ts = metadata.ts != null ? Number(metadata.ts) : Date.now();\nreturn { msg: { type: 'inactivity', originator: { id: metadata.originatorId, entityType: 'DEVICE', name: metadata.originatorName, type: metadata.originatorType }, ts: ts, data: msg, metadata: metadata }, metadata: metadata, msgType: msgType };",
+          "tbelScript": "var ts = metadata.ts != null ? Long.parseLong(metadata.ts) : new Date().getTime();\nvar body = { type: 'inactivity', originator: { id: metadata.originatorId, entityType: 'DEVICE', name: metadata.originatorName, type: metadata.originatorType }, ts: ts, data: msg, metadata: metadata };\nreturn { msg: body, metadata: metadata, msgType: msgType };"
+        },
+        "additionalInfo": {
+          "layoutX": 1460,
+          "layoutY": 230,
+          "description": ""
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Event: connect",
+        "debugMode": false,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "TBEL",
+          "jsScript": "var ts = metadata.ts != null ? Number(metadata.ts) : Date.now();\nreturn { msg: { type: 'connect', originator: { id: metadata.originatorId, entityType: 'DEVICE', name: metadata.originatorName, type: metadata.originatorType }, ts: ts, data: msg, metadata: metadata }, metadata: metadata, msgType: msgType };",
+          "tbelScript": "var ts = metadata.ts != null ? Long.parseLong(metadata.ts) : new Date().getTime();\nvar body = { type: 'connect', originator: { id: metadata.originatorId, entityType: 'DEVICE', name: metadata.originatorName, type: metadata.originatorType }, ts: ts, data: msg, metadata: metadata };\nreturn { msg: body, metadata: metadata, msgType: msgType };"
+        },
+        "additionalInfo": {
+          "layoutX": 1460,
+          "layoutY": 300,
+          "description": ""
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Event: disconnect",
+        "debugMode": false,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "TBEL",
+          "jsScript": "var ts = metadata.ts != null ? Number(metadata.ts) : Date.now();\nreturn { msg: { type: 'disconnect', originator: { id: metadata.originatorId, entityType: 'DEVICE', name: metadata.originatorName, type: metadata.originatorType }, ts: ts, data: msg, metadata: metadata }, metadata: metadata, msgType: msgType };",
+          "tbelScript": "var ts = metadata.ts != null ? Long.parseLong(metadata.ts) : new Date().getTime();\nvar body = { type: 'disconnect', originator: { id: metadata.originatorId, entityType: 'DEVICE', name: metadata.originatorName, type: metadata.originatorType }, ts: ts, data: msg, metadata: metadata };\nreturn { msg: body, metadata: metadata, msgType: msgType };"
+        },
+        "additionalInfo": {
+          "layoutX": 1460,
+          "layoutY": 370,
+          "description": ""
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Event: alarm_created",
+        "debugMode": false,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "TBEL",
+          "jsScript": "var ts = metadata.ts != null ? Number(metadata.ts) : Date.now();\nreturn { msg: { type: 'alarm_created', originator: { id: metadata.originatorId, entityType: 'DEVICE', name: metadata.originatorName, type: metadata.originatorType }, ts: ts, data: msg, metadata: metadata }, metadata: metadata, msgType: msgType };",
+          "tbelScript": "var ts = metadata.ts != null ? Long.parseLong(metadata.ts) : new Date().getTime();\nvar body = { type: 'alarm_created', originator: { id: metadata.originatorId, entityType: 'DEVICE', name: metadata.originatorName, type: metadata.originatorType }, ts: ts, data: msg, metadata: metadata };\nreturn { msg: body, metadata: metadata, msgType: msgType };"
+        },
+        "additionalInfo": {
+          "layoutX": 1460,
+          "layoutY": 440,
+          "description": ""
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Event: alarm_updated",
+        "debugMode": false,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "TBEL",
+          "jsScript": "var ts = metadata.ts != null ? Number(metadata.ts) : Date.now();\nreturn { msg: { type: 'alarm_updated', originator: { id: metadata.originatorId, entityType: 'DEVICE', name: metadata.originatorName, type: metadata.originatorType }, ts: ts, data: msg, metadata: metadata }, metadata: metadata, msgType: msgType };",
+          "tbelScript": "var ts = metadata.ts != null ? Long.parseLong(metadata.ts) : new Date().getTime();\nvar body = { type: 'alarm_updated', originator: { id: metadata.originatorId, entityType: 'DEVICE', name: metadata.originatorName, type: metadata.originatorType }, ts: ts, data: msg, metadata: metadata };\nreturn { msg: body, metadata: metadata, msgType: msgType };"
+        },
+        "additionalInfo": {
+          "layoutX": 1460,
+          "layoutY": 510,
+          "description": ""
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Event: alarm_cleared",
+        "debugMode": false,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "TBEL",
+          "jsScript": "var ts = metadata.ts != null ? Number(metadata.ts) : Date.now();\nreturn { msg: { type: 'alarm_cleared', originator: { id: metadata.originatorId, entityType: 'DEVICE', name: metadata.originatorName, type: metadata.originatorType }, ts: ts, data: msg, metadata: metadata }, metadata: metadata, msgType: msgType };",
+          "tbelScript": "var ts = metadata.ts != null ? Long.parseLong(metadata.ts) : new Date().getTime();\nvar body = { type: 'alarm_cleared', originator: { id: metadata.originatorId, entityType: 'DEVICE', name: metadata.originatorName, type: metadata.originatorType }, ts: ts, data: msg, metadata: metadata };\nreturn { msg: body, metadata: metadata, msgType: msgType };"
+        },
+        "additionalInfo": {
+          "layoutX": 1460,
+          "layoutY": 580,
+          "description": ""
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.rest.TbRestApiCallNode",
+        "name": "platform events",
+        "debugMode": false,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 3,
+        "configuration": {
+          "restEndpointUrlPattern": "${API_URL}/internal/tb/events",
+          "requestMethod": "POST",
+          "headers": {
+            "Content-Type": "application/json",
+            "X-Internal-Token": "${INTERNAL_API_TOKEN}"
+          },
+          "readTimeoutMs": 5000,
+          "maxParallelRequestsCount": 8,
+          "parseToPlainText": false,
+          "enableProxy": false,
+          "useSystemProxyProperties": false,
+          "proxyHost": null,
+          "proxyPort": 0,
+          "proxyUser": null,
+          "proxyPassword": null,
+          "credentials": {
+            "type": "anonymous"
+          },
+          "ignoreRequestBody": false,
+          "maxInMemoryBufferSizeInKb": 256
+        },
+        "additionalInfo": {
+          "layoutX": 1760,
+          "layoutY": 300,
+          "description": ""
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.rpc.TbSendRPCRequestNode",
+        "name": "RPC to device",
+        "debugMode": false,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "timeoutInSeconds": 60
+        },
+        "additionalInfo": {
+          "layoutX": 1000,
+          "layoutY": 700,
+          "description": "Server-side RPC (platform commands) must be forwarded to the device from the root chain"
+        }
+      }
+    ],
+    "connections": [
+      {
+        "fromIndex": 0,
+        "toIndex": 1,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 2,
+        "type": "Post telemetry"
+      },
+      {
+        "fromIndex": 2,
+        "toIndex": 3,
+        "type": "True"
+      },
+      {
+        "fromIndex": 2,
+        "toIndex": 4,
+        "type": "False"
+      },
+      {
+        "fromIndex": 4,
+        "toIndex": 5,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 4,
+        "toIndex": 8,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 5,
+        "toIndex": 14,
+        "type": "Alarm Created"
+      },
+      {
+        "fromIndex": 5,
+        "toIndex": 15,
+        "type": "Alarm Updated"
+      },
+      {
+        "fromIndex": 5,
+        "toIndex": 15,
+        "type": "Alarm Severity Updated"
+      },
+      {
+        "fromIndex": 5,
+        "toIndex": 16,
+        "type": "Alarm Cleared"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 6,
+        "type": "Post attributes"
+      },
+      {
+        "fromIndex": 6,
+        "toIndex": 9,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 10,
+        "type": "Activity Event"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 11,
+        "type": "Inactivity Event"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 12,
+        "type": "Connect Event"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 13,
+        "type": "Disconnect Event"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 7,
+        "type": "RPC Request from Device"
+      },
+      {
+        "fromIndex": 8,
+        "toIndex": 17,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 9,
+        "toIndex": 17,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 10,
+        "toIndex": 17,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 11,
+        "toIndex": 17,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 12,
+        "toIndex": 17,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 13,
+        "toIndex": 17,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 14,
+        "toIndex": 17,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 15,
+        "toIndex": 17,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 16,
+        "toIndex": 17,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 18,
+        "type": "RPC Request to Device"
+      }
+    ],
+    "ruleChainConnections": null
+  }
+}

@@ -1,0 +1,30 @@
+# syntax=docker/dockerfile:1
+# Build context: platform/. Virtual devices speaking MQTT to ThingsBoard.
+FROM node:22-alpine AS base
+RUN corepack enable && (corepack prepare pnpm@11.3.0 --activate || npm i -g pnpm@11)
+WORKDIR /workspace
+
+FROM base AS deps
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.base.json ./
+COPY shared/package.json shared/
+COPY api/package.json api/
+COPY simulator/package.json simulator/
+COPY web/package.json web/
+COPY e2e/package.json e2e/
+RUN pnpm install --frozen-lockfile
+
+FROM deps AS build
+COPY shared/ shared/
+COPY simulator/ simulator/
+RUN pnpm --filter @platform/shared build \
+ && pnpm --filter @platform/simulator build \
+ && pnpm --filter @platform/simulator deploy --prod --legacy /out/simulator
+
+FROM node:22-alpine AS runtime
+ENV NODE_ENV=production
+RUN apk add --no-cache wget
+WORKDIR /app/simulator
+COPY --from=build /out/simulator/ ./
+EXPOSE 4100
+USER node
+CMD ["node", "dist/main.js"]

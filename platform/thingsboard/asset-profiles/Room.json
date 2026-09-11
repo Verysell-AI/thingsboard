@@ -1,0 +1,10 @@
+{
+  "name": "Room",
+  "description": "Room, open plan or service area",
+  "image": null,
+  "default": false,
+  "defaultRuleChainId": null,
+  "defaultDashboardId": null,
+  "defaultQueueName": null,
+  "defaultEdgeRuleChainId": null
+}

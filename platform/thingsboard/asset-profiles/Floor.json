@@ -1,0 +1,10 @@
+{
+  "name": "Floor",
+  "description": "Floor of a building",
+  "image": null,
+  "default": false,
+  "defaultRuleChainId": null,
+  "defaultDashboardId": null,
+  "defaultQueueName": null,
+  "defaultEdgeRuleChainId": null
+}

@@ -1,0 +1,10 @@
+{
+  "name": "Building",
+  "description": "Building on a site",
+  "image": null,
+  "default": false,
+  "defaultRuleChainId": null,
+  "defaultDashboardId": null,
+  "defaultQueueName": null,
+  "defaultEdgeRuleChainId": null
+}

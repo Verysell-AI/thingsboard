@@ -1,0 +1,15 @@
+packages:
+  - shared
+  - api
+  - simulator
+  - web
+  - e2e
+
+# Native/esbuild postinstall steps we trust (vite, tsx, bullmq, tailwind)
+allowBuilds:
+  esbuild: true
+  msgpackr-extract: true
+  '@tailwindcss/oxide': true
+  sharp: true
+
+strictPeerDependencies: false

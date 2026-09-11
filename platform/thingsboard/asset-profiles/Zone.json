@@ -1,0 +1,10 @@
+{
+  "name": "Zone",
+  "description": "Wi-Fi zone used for presence and the late-worker sweep",
+  "image": null,
+  "default": false,
+  "defaultRuleChainId": null,
+  "defaultDashboardId": null,
+  "defaultQueueName": null,
+  "defaultEdgeRuleChainId": null
+}

@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+.react-router
+pnpm-lock.yaml
+drizzle/meta
+e2e/audit
+e2e/playwright-report
+e2e/test-results

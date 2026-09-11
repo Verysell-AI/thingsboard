@@ -1,0 +1,32 @@
+# syntax=docker/dockerfile:1
+# Build context: platform/ (pnpm workspace). Produces the API image used by api, worker and CLI.
+FROM node:22-alpine AS base
+RUN corepack enable && (corepack prepare pnpm@11.3.0 --activate || npm i -g pnpm@11)
+WORKDIR /workspace
+
+FROM base AS deps
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.base.json ./
+COPY shared/package.json shared/
+COPY api/package.json api/
+COPY simulator/package.json simulator/
+COPY web/package.json web/
+COPY e2e/package.json e2e/
+RUN pnpm install --frozen-lockfile
+
+FROM deps AS build
+COPY shared/ shared/
+COPY api/ api/
+RUN pnpm --filter @platform/shared build \
+ && pnpm --filter @platform/api build \
+ && pnpm --filter @platform/api deploy --prod --legacy /out/api
+# pnpm deploy copies the whole package (dist/, drizzle/ SQL migrations) plus production node_modules
+
+FROM node:22-alpine AS runtime
+ENV NODE_ENV=production
+RUN apk add --no-cache curl wget
+WORKDIR /app/api
+COPY --from=build /out/api/ ./
+# node_modules/@platform/shared is a workspace link resolved by pnpm deploy (copied, not symlinked)
+EXPOSE 4000
+USER node
+CMD ["node", "dist/server.js"]
