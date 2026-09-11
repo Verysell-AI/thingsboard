@@ -1,0 +1,43 @@
+{
+  "personas": [
+    {
+      "key": "early_bird",
+      "name": "Early bird",
+      "arrive": "07:30",
+      "leave": "16:30",
+      "meetings": 1
+    },
+    {
+      "key": "standard",
+      "name": "Standard",
+      "arrive": "09:00",
+      "leave": "18:00",
+      "meetings": 2,
+      "notes": "Majority of staff"
+    },
+    {
+      "key": "late_worker",
+      "name": "Late worker",
+      "arrive": "10:00",
+      "leave": "21:30",
+      "meetings": 1,
+      "notes": "Keeps a zone on at the evening sweep"
+    },
+    {
+      "key": "meeting_heavy",
+      "name": "Meeting heavy",
+      "arrive": "09:00",
+      "leave": "18:30",
+      "meetings": 4,
+      "notes": "Moves between meeting rooms"
+    },
+    {
+      "key": "remote_today",
+      "name": "Remote today",
+      "arrive": null,
+      "leave": null,
+      "meetings": 0,
+      "notes": "Laptop stays offline"
+    }
+  ]
+}

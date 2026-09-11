@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 48" width="240" height="48" role="img" aria-label="Oasis Retail Holdings">
+  <circle cx="24" cy="24" r="18" fill="#B5451B"/>
+  <path d="M14 30 Q24 12 34 30 Z" fill="#0F766E"/>
+  <circle cx="24" cy="17" r="4" fill="#FDE68A"/>
+  <text x="54" y="31" font-family="Inter, system-ui, sans-serif" font-size="20" font-weight="700" fill="#B5451B">Oasis Retail</text>
+</svg>

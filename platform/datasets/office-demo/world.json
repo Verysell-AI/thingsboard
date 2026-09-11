@@ -1,0 +1,1204 @@
+{
+  "site": {
+    "code": "HQ",
+    "name": "Headquarters"
+  },
+  "building": {
+    "code": "MAIN",
+    "name": "Main building"
+  },
+  "floors": [
+    {
+      "number": 1,
+      "code": "F1",
+      "name": "Floor 1"
+    },
+    {
+      "number": 2,
+      "code": "F2",
+      "name": "Floor 2"
+    }
+  ],
+  "zones": [
+    {
+      "code": "1.West",
+      "name": "Floor 1 West",
+      "floor": 1,
+      "accessPoint": "AP-1W"
+    },
+    {
+      "code": "1.East",
+      "name": "Floor 1 East",
+      "floor": 1,
+      "accessPoint": "AP-1E"
+    },
+    {
+      "code": "2.West",
+      "name": "Floor 2 West",
+      "floor": 2,
+      "accessPoint": "AP-2W"
+    },
+    {
+      "code": "2.East",
+      "name": "Floor 2 East",
+      "floor": 2,
+      "accessPoint": "AP-2E"
+    }
+  ],
+  "rooms": [
+    {
+      "code": "1.1",
+      "name": "Meeting room 1.1",
+      "floor": 1,
+      "kind": "meeting",
+      "zone": "1.West",
+      "capacity": 4,
+      "critical": false,
+      "geometry": {
+        "x": 40,
+        "y": 40,
+        "w": 160,
+        "h": 180
+      }
+    },
+    {
+      "code": "1.2",
+      "name": "Meeting room 1.2",
+      "floor": 1,
+      "kind": "meeting",
+      "zone": "1.West",
+      "capacity": 6,
+      "critical": false,
+      "geometry": {
+        "x": 220,
+        "y": 40,
+        "w": 200,
+        "h": 180
+      }
+    },
+    {
+      "code": "1.3",
+      "name": "Meeting room 1.3",
+      "floor": 1,
+      "kind": "meeting",
+      "zone": "1.East",
+      "capacity": 8,
+      "critical": false,
+      "geometry": {
+        "x": 440,
+        "y": 40,
+        "w": 240,
+        "h": 180
+      }
+    },
+    {
+      "code": "1.4",
+      "name": "Meeting room 1.4",
+      "floor": 1,
+      "kind": "meeting",
+      "zone": "1.East",
+      "capacity": 12,
+      "critical": false,
+      "geometry": {
+        "x": 700,
+        "y": 40,
+        "w": 300,
+        "h": 180
+      }
+    },
+    {
+      "code": "1.O",
+      "name": "Open plan 1",
+      "floor": 1,
+      "kind": "open_plan",
+      "zone": "1.West",
+      "capacity": 12,
+      "critical": false,
+      "geometry": {
+        "x": 40,
+        "y": 260,
+        "w": 620,
+        "h": 300
+      }
+    },
+    {
+      "code": "1.P",
+      "name": "Pantry",
+      "floor": 1,
+      "kind": "pantry",
+      "zone": "1.East",
+      "critical": false,
+      "geometry": {
+        "x": 700,
+        "y": 260,
+        "w": 260,
+        "h": 140
+      }
+    },
+    {
+      "code": "1.R",
+      "name": "Reception",
+      "floor": 1,
+      "kind": "reception",
+      "zone": "1.East",
+      "critical": false,
+      "geometry": {
+        "x": 700,
+        "y": 420,
+        "w": 260,
+        "h": 140
+      }
+    },
+    {
+      "code": "2.1",
+      "name": "Meeting room 2.1",
+      "floor": 2,
+      "kind": "meeting",
+      "zone": "2.West",
+      "capacity": 4,
+      "critical": false,
+      "geometry": {
+        "x": 40,
+        "y": 40,
+        "w": 160,
+        "h": 180
+      }
+    },
+    {
+      "code": "2.2",
+      "name": "Meeting room 2.2",
+      "floor": 2,
+      "kind": "meeting",
+      "zone": "2.West",
+      "capacity": 6,
+      "critical": false,
+      "geometry": {
+        "x": 220,
+        "y": 40,
+        "w": 200,
+        "h": 180
+      }
+    },
+    {
+      "code": "2.3",
+      "name": "Meeting room 2.3",
+      "floor": 2,
+      "kind": "meeting",
+      "zone": "2.East",
+      "capacity": 8,
+      "critical": false,
+      "geometry": {
+        "x": 440,
+        "y": 40,
+        "w": 240,
+        "h": 180
+      }
+    },
+    {
+      "code": "2.4",
+      "name": "Meeting room 2.4",
+      "floor": 2,
+      "kind": "meeting",
+      "zone": "2.East",
+      "capacity": 12,
+      "critical": false,
+      "geometry": {
+        "x": 700,
+        "y": 40,
+        "w": 300,
+        "h": 180
+      }
+    },
+    {
+      "code": "2.O",
+      "name": "Open plan 2",
+      "floor": 2,
+      "kind": "open_plan",
+      "zone": "2.West",
+      "capacity": 12,
+      "critical": false,
+      "geometry": {
+        "x": 40,
+        "y": 260,
+        "w": 620,
+        "h": 300
+      }
+    },
+    {
+      "code": "2.S",
+      "name": "Server room",
+      "floor": 2,
+      "kind": "server",
+      "zone": "2.East",
+      "critical": true,
+      "geometry": {
+        "x": 700,
+        "y": 260,
+        "w": 260,
+        "h": 300
+      }
+    }
+  ],
+  "desks": [
+    {
+      "code": "D-1.O-01",
+      "room": "1.O",
+      "zone": "1.West",
+      "x": 100,
+      "y": 340
+    },
+    {
+      "code": "D-1.O-02",
+      "room": "1.O",
+      "zone": "1.West",
+      "x": 200,
+      "y": 340
+    },
+    {
+      "code": "D-1.O-03",
+      "room": "1.O",
+      "zone": "1.West",
+      "x": 300,
+      "y": 340
+    },
+    {
+      "code": "D-1.O-04",
+      "room": "1.O",
+      "zone": "1.East",
+      "x": 400,
+      "y": 340
+    },
+    {
+      "code": "D-1.O-05",
+      "room": "1.O",
+      "zone": "1.East",
+      "x": 500,
+      "y": 340
+    },
+    {
+      "code": "D-1.O-06",
+      "room": "1.O",
+      "zone": "1.East",
+      "x": 600,
+      "y": 340
+    },
+    {
+      "code": "D-1.O-07",
+      "room": "1.O",
+      "zone": "1.West",
+      "x": 100,
+      "y": 480
+    },
+    {
+      "code": "D-1.O-08",
+      "room": "1.O",
+      "zone": "1.West",
+      "x": 200,
+      "y": 480
+    },
+    {
+      "code": "D-1.O-09",
+      "room": "1.O",
+      "zone": "1.West",
+      "x": 300,
+      "y": 480
+    },
+    {
+      "code": "D-1.O-10",
+      "room": "1.O",
+      "zone": "1.East",
+      "x": 400,
+      "y": 480
+    },
+    {
+      "code": "D-1.O-11",
+      "room": "1.O",
+      "zone": "1.East",
+      "x": 500,
+      "y": 480
+    },
+    {
+      "code": "D-1.O-12",
+      "room": "1.O",
+      "zone": "1.East",
+      "x": 600,
+      "y": 480
+    },
+    {
+      "code": "D-2.O-01",
+      "room": "2.O",
+      "zone": "2.West",
+      "x": 100,
+      "y": 340
+    },
+    {
+      "code": "D-2.O-02",
+      "room": "2.O",
+      "zone": "2.West",
+      "x": 200,
+      "y": 340
+    },
+    {
+      "code": "D-2.O-03",
+      "room": "2.O",
+      "zone": "2.West",
+      "x": 300,
+      "y": 340
+    },
+    {
+      "code": "D-2.O-04",
+      "room": "2.O",
+      "zone": "2.East",
+      "x": 400,
+      "y": 340
+    },
+    {
+      "code": "D-2.O-05",
+      "room": "2.O",
+      "zone": "2.East",
+      "x": 500,
+      "y": 340
+    },
+    {
+      "code": "D-2.O-06",
+      "room": "2.O",
+      "zone": "2.East",
+      "x": 600,
+      "y": 340
+    },
+    {
+      "code": "D-2.O-07",
+      "room": "2.O",
+      "zone": "2.West",
+      "x": 100,
+      "y": 480
+    },
+    {
+      "code": "D-2.O-08",
+      "room": "2.O",
+      "zone": "2.West",
+      "x": 200,
+      "y": 480
+    },
+    {
+      "code": "D-2.O-09",
+      "room": "2.O",
+      "zone": "2.West",
+      "x": 300,
+      "y": 480
+    },
+    {
+      "code": "D-2.O-10",
+      "room": "2.O",
+      "zone": "2.East",
+      "x": 400,
+      "y": 480
+    },
+    {
+      "code": "D-2.O-11",
+      "room": "2.O",
+      "zone": "2.East",
+      "x": 500,
+      "y": 480
+    },
+    {
+      "code": "D-2.O-12",
+      "room": "2.O",
+      "zone": "2.East",
+      "x": 600,
+      "y": 480
+    }
+  ],
+  "devices": [
+    {
+      "code": "LIGHT-1.1",
+      "name": "Light 1.1",
+      "type": "light",
+      "room": "1.1",
+      "nominalPowerW": 60,
+      "x": 64,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "AC-1.1",
+      "name": "AC unit 1.1",
+      "type": "ac",
+      "room": "1.1",
+      "nominalPowerW": 800,
+      "nominalCurrentA": 3.4,
+      "filterDegrading": false,
+      "x": 94,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "RM-1.1",
+      "name": "Room meter 1.1",
+      "type": "room_meter",
+      "room": "1.1",
+      "nightBaselineW": 25,
+      "x": 176,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "OCC-1.1",
+      "name": "Occupancy sensor 1.1",
+      "type": "occupancy",
+      "room": "1.1",
+      "x": 120,
+      "y": 122,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-1.1-PROJ",
+      "name": "Projector plug 1.1",
+      "type": "plug",
+      "room": "1.1",
+      "appliance": "projector",
+      "nominalPowerW": 280,
+      "standbyPowerW": 4,
+      "sweepable": true,
+      "x": 120,
+      "y": 158,
+      "attrs": {}
+    },
+    {
+      "code": "LIGHT-1.2",
+      "name": "Light 1.2",
+      "type": "light",
+      "room": "1.2",
+      "nominalPowerW": 60,
+      "x": 244,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "AC-1.2",
+      "name": "AC unit 1.2",
+      "type": "ac",
+      "room": "1.2",
+      "nominalPowerW": 800,
+      "nominalCurrentA": 3.4,
+      "filterDegrading": false,
+      "x": 274,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "RM-1.2",
+      "name": "Room meter 1.2",
+      "type": "room_meter",
+      "room": "1.2",
+      "nightBaselineW": 25,
+      "x": 396,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "OCC-1.2",
+      "name": "Occupancy sensor 1.2",
+      "type": "occupancy",
+      "room": "1.2",
+      "x": 320,
+      "y": 122,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-1.2-PROJ",
+      "name": "Projector plug 1.2",
+      "type": "plug",
+      "room": "1.2",
+      "appliance": "projector",
+      "nominalPowerW": 280,
+      "standbyPowerW": 4,
+      "sweepable": true,
+      "x": 320,
+      "y": 158,
+      "attrs": {}
+    },
+    {
+      "code": "LIGHT-1.3",
+      "name": "Light 1.3",
+      "type": "light",
+      "room": "1.3",
+      "nominalPowerW": 60,
+      "x": 464,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "AC-1.3",
+      "name": "AC unit 1.3",
+      "type": "ac",
+      "room": "1.3",
+      "nominalPowerW": 1000,
+      "nominalCurrentA": 4.2,
+      "filterDegrading": false,
+      "x": 494,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "RM-1.3",
+      "name": "Room meter 1.3",
+      "type": "room_meter",
+      "room": "1.3",
+      "nightBaselineW": 25,
+      "x": 656,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "OCC-1.3",
+      "name": "Occupancy sensor 1.3",
+      "type": "occupancy",
+      "room": "1.3",
+      "x": 560,
+      "y": 122,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-1.3-PROJ",
+      "name": "Projector plug 1.3",
+      "type": "plug",
+      "room": "1.3",
+      "appliance": "projector",
+      "nominalPowerW": 280,
+      "standbyPowerW": 4,
+      "sweepable": true,
+      "x": 560,
+      "y": 158,
+      "attrs": {}
+    },
+    {
+      "code": "LIGHT-1.4",
+      "name": "Light 1.4",
+      "type": "light",
+      "room": "1.4",
+      "nominalPowerW": 60,
+      "x": 724,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "AC-1.4",
+      "name": "AC unit 1.4",
+      "type": "ac",
+      "room": "1.4",
+      "nominalPowerW": 1200,
+      "nominalCurrentA": 5.1,
+      "filterDegrading": false,
+      "x": 754,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "RM-1.4",
+      "name": "Room meter 1.4",
+      "type": "room_meter",
+      "room": "1.4",
+      "nightBaselineW": 25,
+      "x": 976,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "OCC-1.4",
+      "name": "Occupancy sensor 1.4",
+      "type": "occupancy",
+      "room": "1.4",
+      "x": 850,
+      "y": 122,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-1.4-PROJ",
+      "name": "Projector plug 1.4",
+      "type": "plug",
+      "room": "1.4",
+      "appliance": "projector",
+      "nominalPowerW": 280,
+      "standbyPowerW": 4,
+      "sweepable": true,
+      "x": 850,
+      "y": 158,
+      "attrs": {}
+    },
+    {
+      "code": "LIGHT-1.O",
+      "name": "Light 1.O",
+      "type": "light",
+      "room": "1.O",
+      "nominalPowerW": 240,
+      "x": 64,
+      "y": 536,
+      "attrs": {}
+    },
+    {
+      "code": "AC-1.O",
+      "name": "AC unit 1.O",
+      "type": "ac",
+      "room": "1.O",
+      "nominalPowerW": 1400,
+      "nominalCurrentA": 5.9,
+      "filterDegrading": false,
+      "x": 94,
+      "y": 536,
+      "attrs": {}
+    },
+    {
+      "code": "RM-1.O",
+      "name": "Room meter 1.O",
+      "type": "room_meter",
+      "room": "1.O",
+      "nightBaselineW": 90,
+      "x": 636,
+      "y": 536,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-1.O-MON1",
+      "name": "Monitor plug 1.O/1",
+      "type": "plug",
+      "room": "1.O",
+      "appliance": "monitor",
+      "nominalPowerW": 35,
+      "standbyPowerW": 6,
+      "sweepable": true,
+      "x": 230,
+      "y": 310,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-1.O-MON2",
+      "name": "Monitor plug 1.O/2",
+      "type": "plug",
+      "room": "1.O",
+      "appliance": "monitor",
+      "nominalPowerW": 35,
+      "standbyPowerW": 6,
+      "sweepable": true,
+      "x": 430,
+      "y": 310,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-1.O-MON3",
+      "name": "Monitor plug 1.O/3",
+      "type": "plug",
+      "room": "1.O",
+      "appliance": "monitor",
+      "nominalPowerW": 35,
+      "standbyPowerW": 6,
+      "sweepable": true,
+      "x": 630,
+      "y": 310,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-1.O-MON4",
+      "name": "Monitor plug 1.O/4",
+      "type": "plug",
+      "room": "1.O",
+      "appliance": "monitor",
+      "nominalPowerW": 35,
+      "standbyPowerW": 6,
+      "sweepable": true,
+      "x": 230,
+      "y": 450,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-1.O-MON5",
+      "name": "Monitor plug 1.O/5",
+      "type": "plug",
+      "room": "1.O",
+      "appliance": "monitor",
+      "nominalPowerW": 35,
+      "standbyPowerW": 6,
+      "sweepable": true,
+      "x": 430,
+      "y": 450,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-1.O-MON6",
+      "name": "Monitor plug 1.O/6",
+      "type": "plug",
+      "room": "1.O",
+      "appliance": "monitor",
+      "nominalPowerW": 35,
+      "standbyPowerW": 6,
+      "sweepable": true,
+      "x": 630,
+      "y": 450,
+      "attrs": {}
+    },
+    {
+      "code": "LIGHT-1.P",
+      "name": "Light 1.P",
+      "type": "light",
+      "room": "1.P",
+      "nominalPowerW": 40,
+      "x": 724,
+      "y": 376,
+      "attrs": {}
+    },
+    {
+      "code": "AC-1.P",
+      "name": "AC unit 1.P",
+      "type": "ac",
+      "room": "1.P",
+      "nominalPowerW": 800,
+      "nominalCurrentA": 3.4,
+      "filterDegrading": false,
+      "x": 754,
+      "y": 376,
+      "attrs": {}
+    },
+    {
+      "code": "RM-1.P",
+      "name": "Room meter 1.P",
+      "type": "room_meter",
+      "room": "1.P",
+      "nightBaselineW": 180,
+      "x": 936,
+      "y": 376,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-1.P-FRIDGE",
+      "name": "Fridge plug",
+      "type": "plug",
+      "room": "1.P",
+      "appliance": "fridge",
+      "nominalPowerW": 150,
+      "standbyPowerW": 60,
+      "sweepable": false,
+      "x": 770,
+      "y": 360,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-1.P-COFFEE",
+      "name": "Coffee machine plug",
+      "type": "plug",
+      "room": "1.P",
+      "appliance": "coffee_machine",
+      "nominalPowerW": 1200,
+      "standbyPowerW": 8,
+      "sweepable": true,
+      "x": 890,
+      "y": 360,
+      "attrs": {}
+    },
+    {
+      "code": "LIGHT-1.R",
+      "name": "Light 1.R",
+      "type": "light",
+      "room": "1.R",
+      "nominalPowerW": 40,
+      "x": 724,
+      "y": 536,
+      "attrs": {}
+    },
+    {
+      "code": "AC-1.R",
+      "name": "AC unit 1.R",
+      "type": "ac",
+      "room": "1.R",
+      "nominalPowerW": 800,
+      "nominalCurrentA": 3.4,
+      "filterDegrading": false,
+      "x": 754,
+      "y": 536,
+      "attrs": {}
+    },
+    {
+      "code": "RM-1.R",
+      "name": "Room meter 1.R",
+      "type": "room_meter",
+      "room": "1.R",
+      "nightBaselineW": 25,
+      "x": 936,
+      "y": 536,
+      "attrs": {}
+    },
+    {
+      "code": "LIGHT-2.1",
+      "name": "Light 2.1",
+      "type": "light",
+      "room": "2.1",
+      "nominalPowerW": 60,
+      "x": 64,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "AC-2.1",
+      "name": "AC unit 2.1",
+      "type": "ac",
+      "room": "2.1",
+      "nominalPowerW": 800,
+      "nominalCurrentA": 3.4,
+      "filterDegrading": false,
+      "x": 94,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "RM-2.1",
+      "name": "Room meter 2.1",
+      "type": "room_meter",
+      "room": "2.1",
+      "nightBaselineW": 25,
+      "x": 176,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "OCC-2.1",
+      "name": "Occupancy sensor 2.1",
+      "type": "occupancy",
+      "room": "2.1",
+      "x": 120,
+      "y": 122,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-2.1-PROJ",
+      "name": "Projector plug 2.1",
+      "type": "plug",
+      "room": "2.1",
+      "appliance": "projector",
+      "nominalPowerW": 280,
+      "standbyPowerW": 4,
+      "sweepable": true,
+      "x": 120,
+      "y": 158,
+      "attrs": {}
+    },
+    {
+      "code": "LIGHT-2.2",
+      "name": "Light 2.2",
+      "type": "light",
+      "room": "2.2",
+      "nominalPowerW": 60,
+      "x": 244,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "AC-2.2",
+      "name": "AC unit 2.2",
+      "type": "ac",
+      "room": "2.2",
+      "nominalPowerW": 800,
+      "nominalCurrentA": 3.4,
+      "filterDegrading": false,
+      "x": 274,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "RM-2.2",
+      "name": "Room meter 2.2",
+      "type": "room_meter",
+      "room": "2.2",
+      "nightBaselineW": 25,
+      "x": 396,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "OCC-2.2",
+      "name": "Occupancy sensor 2.2",
+      "type": "occupancy",
+      "room": "2.2",
+      "x": 320,
+      "y": 122,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-2.2-PROJ",
+      "name": "Projector plug 2.2",
+      "type": "plug",
+      "room": "2.2",
+      "appliance": "projector",
+      "nominalPowerW": 280,
+      "standbyPowerW": 4,
+      "sweepable": true,
+      "x": 320,
+      "y": 158,
+      "attrs": {}
+    },
+    {
+      "code": "LIGHT-2.3",
+      "name": "Light 2.3",
+      "type": "light",
+      "room": "2.3",
+      "nominalPowerW": 60,
+      "x": 464,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "AC-2.3",
+      "name": "AC unit 2.3",
+      "type": "ac",
+      "room": "2.3",
+      "nominalPowerW": 1000,
+      "nominalCurrentA": 4.2,
+      "filterDegrading": true,
+      "x": 494,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "RM-2.3",
+      "name": "Room meter 2.3",
+      "type": "room_meter",
+      "room": "2.3",
+      "nightBaselineW": 25,
+      "x": 656,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "OCC-2.3",
+      "name": "Occupancy sensor 2.3",
+      "type": "occupancy",
+      "room": "2.3",
+      "x": 560,
+      "y": 122,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-2.3-PROJ",
+      "name": "Projector plug 2.3",
+      "type": "plug",
+      "room": "2.3",
+      "appliance": "projector",
+      "nominalPowerW": 280,
+      "standbyPowerW": 4,
+      "sweepable": true,
+      "x": 560,
+      "y": 158,
+      "attrs": {}
+    },
+    {
+      "code": "LIGHT-2.4",
+      "name": "Light 2.4",
+      "type": "light",
+      "room": "2.4",
+      "nominalPowerW": 60,
+      "x": 724,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "AC-2.4",
+      "name": "AC unit 2.4",
+      "type": "ac",
+      "room": "2.4",
+      "nominalPowerW": 1200,
+      "nominalCurrentA": 5.1,
+      "filterDegrading": false,
+      "x": 754,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "RM-2.4",
+      "name": "Room meter 2.4",
+      "type": "room_meter",
+      "room": "2.4",
+      "nightBaselineW": 25,
+      "x": 976,
+      "y": 196,
+      "attrs": {}
+    },
+    {
+      "code": "OCC-2.4",
+      "name": "Occupancy sensor 2.4",
+      "type": "occupancy",
+      "room": "2.4",
+      "x": 850,
+      "y": 122,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-2.4-PROJ",
+      "name": "Projector plug 2.4",
+      "type": "plug",
+      "room": "2.4",
+      "appliance": "projector",
+      "nominalPowerW": 280,
+      "standbyPowerW": 4,
+      "sweepable": true,
+      "x": 850,
+      "y": 158,
+      "attrs": {}
+    },
+    {
+      "code": "LIGHT-2.O",
+      "name": "Light 2.O",
+      "type": "light",
+      "room": "2.O",
+      "nominalPowerW": 240,
+      "x": 64,
+      "y": 536,
+      "attrs": {}
+    },
+    {
+      "code": "AC-2.O",
+      "name": "AC unit 2.O",
+      "type": "ac",
+      "room": "2.O",
+      "nominalPowerW": 1400,
+      "nominalCurrentA": 5.9,
+      "filterDegrading": false,
+      "x": 94,
+      "y": 536,
+      "attrs": {}
+    },
+    {
+      "code": "RM-2.O",
+      "name": "Room meter 2.O",
+      "type": "room_meter",
+      "room": "2.O",
+      "nightBaselineW": 90,
+      "x": 636,
+      "y": 536,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-2.O-MON1",
+      "name": "Monitor plug 2.O/1",
+      "type": "plug",
+      "room": "2.O",
+      "appliance": "monitor",
+      "nominalPowerW": 35,
+      "standbyPowerW": 6,
+      "sweepable": true,
+      "x": 230,
+      "y": 310,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-2.O-MON2",
+      "name": "Monitor plug 2.O/2",
+      "type": "plug",
+      "room": "2.O",
+      "appliance": "monitor",
+      "nominalPowerW": 35,
+      "standbyPowerW": 6,
+      "sweepable": true,
+      "x": 430,
+      "y": 310,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-2.O-MON3",
+      "name": "Monitor plug 2.O/3",
+      "type": "plug",
+      "room": "2.O",
+      "appliance": "monitor",
+      "nominalPowerW": 35,
+      "standbyPowerW": 6,
+      "sweepable": true,
+      "x": 630,
+      "y": 310,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-2.O-MON4",
+      "name": "Monitor plug 2.O/4",
+      "type": "plug",
+      "room": "2.O",
+      "appliance": "monitor",
+      "nominalPowerW": 35,
+      "standbyPowerW": 6,
+      "sweepable": true,
+      "x": 230,
+      "y": 450,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-2.O-MON5",
+      "name": "Monitor plug 2.O/5",
+      "type": "plug",
+      "room": "2.O",
+      "appliance": "monitor",
+      "nominalPowerW": 35,
+      "standbyPowerW": 6,
+      "sweepable": true,
+      "x": 430,
+      "y": 450,
+      "attrs": {}
+    },
+    {
+      "code": "PLUG-2.O-MON6",
+      "name": "Monitor plug 2.O/6",
+      "type": "plug",
+      "room": "2.O",
+      "appliance": "monitor",
+      "nominalPowerW": 35,
+      "standbyPowerW": 6,
+      "sweepable": true,
+      "x": 630,
+      "y": 450,
+      "attrs": {}
+    },
+    {
+      "code": "LIGHT-2.S",
+      "name": "Light 2.S",
+      "type": "light",
+      "room": "2.S",
+      "nominalPowerW": 40,
+      "x": 724,
+      "y": 536,
+      "attrs": {}
+    },
+    {
+      "code": "AC-2.S",
+      "name": "AC unit 2.S",
+      "type": "ac",
+      "room": "2.S",
+      "nominalPowerW": 1400,
+      "nominalCurrentA": 5.9,
+      "filterDegrading": false,
+      "x": 754,
+      "y": 536,
+      "attrs": {}
+    },
+    {
+      "code": "RM-2.S",
+      "name": "Room meter 2.S",
+      "type": "room_meter",
+      "room": "2.S",
+      "nightBaselineW": 3000,
+      "x": 936,
+      "y": 536,
+      "attrs": {}
+    },
+    {
+      "code": "FM-1",
+      "name": "Floor meter 1",
+      "type": "floor_meter",
+      "floor": 1,
+      "coreLoadW": 600,
+      "attrs": {}
+    },
+    {
+      "code": "FM-2",
+      "name": "Floor meter 2",
+      "type": "floor_meter",
+      "floor": 2,
+      "coreLoadW": 3100,
+      "attrs": {}
+    }
+  ]
+}

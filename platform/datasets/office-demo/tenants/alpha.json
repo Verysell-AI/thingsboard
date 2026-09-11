@@ -1,0 +1,237 @@
+{
+  "key": "alpha",
+  "name": "Falcon Facilities Group",
+  "hostname": "alpha.localhost",
+  "locale": "en",
+  "currency": "AED",
+  "tariffPerKwh": 0.44,
+  "demoMode": true,
+  "brand": {
+    "name": "Falcon Facilities Group",
+    "shortName": "Falcon",
+    "primaryColor": "#0B3D91",
+    "accentColor": "#F59E0B",
+    "logo": "brands/alpha/logo.svg",
+    "favicon": "brands/alpha/favicon.svg",
+    "fontFamily": "Inter, system-ui, sans-serif",
+    "loginTagline": "Every asset, every kilowatt, one platform."
+  },
+  "employees": [
+    {
+      "code": "E001",
+      "name": "Amira Haddad",
+      "department": "Sales",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-01",
+      "persona": "standard",
+      "email": "amira.haddad@alpha.demo"
+    },
+    {
+      "code": "E002",
+      "name": "Hana Saleh",
+      "department": "Engineering",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-02",
+      "persona": "standard",
+      "email": "hana.saleh@alpha.demo"
+    },
+    {
+      "code": "E003",
+      "name": "Omar Aziz",
+      "department": "Operations",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-03",
+      "persona": "standard",
+      "email": "omar.aziz@alpha.demo"
+    },
+    {
+      "code": "E004",
+      "name": "Vida Malik",
+      "department": "Finance",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-04",
+      "persona": "standard",
+      "email": "vida.malik@alpha.demo"
+    },
+    {
+      "code": "E005",
+      "name": "Faris Kassem",
+      "department": "Sales",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-05",
+      "persona": "standard",
+      "email": "faris.kassem@alpha.demo"
+    },
+    {
+      "code": "E006",
+      "name": "Salma Rahman",
+      "department": "Engineering",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-06",
+      "persona": "standard",
+      "email": "salma.rahman@alpha.demo"
+    },
+    {
+      "code": "E007",
+      "name": "Hadi Farouk",
+      "department": "Operations",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-07",
+      "persona": "early_bird",
+      "email": "hadi.farouk@alpha.demo"
+    },
+    {
+      "code": "E008",
+      "name": "Bilal Sabbagh",
+      "department": "Finance",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-08",
+      "persona": "early_bird",
+      "email": "bilal.sabbagh@alpha.demo"
+    },
+    {
+      "code": "E009",
+      "name": "Idris Barakat",
+      "department": "Sales",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-09",
+      "persona": "late_worker",
+      "email": "idris.barakat@alpha.demo"
+    },
+    {
+      "code": "E010",
+      "name": "Priya Shah",
+      "department": "Engineering",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-10",
+      "persona": "meeting_heavy",
+      "email": "priya.shah@alpha.demo"
+    },
+    {
+      "code": "E011",
+      "name": "Walid Nair",
+      "department": "Operations",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-11",
+      "persona": "meeting_heavy",
+      "email": "walid.nair@alpha.demo"
+    },
+    {
+      "code": "E012",
+      "name": "Huda Iyer",
+      "department": "Finance",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-12",
+      "persona": "remote_today",
+      "email": "huda.iyer@alpha.demo"
+    },
+    {
+      "code": "E013",
+      "name": "Tariq Nasser",
+      "department": "Engineering",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-01",
+      "persona": "standard",
+      "email": "tariq.nasser@alpha.demo"
+    },
+    {
+      "code": "E014",
+      "name": "Jana Rashid",
+      "department": "Operations",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-02",
+      "persona": "standard",
+      "email": "jana.rashid@alpha.demo"
+    },
+    {
+      "code": "E015",
+      "name": "Chandra Darwish",
+      "department": "Finance",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-03",
+      "persona": "standard",
+      "email": "chandra.darwish@alpha.demo"
+    },
+    {
+      "code": "E016",
+      "name": "Jumana Mansour",
+      "department": "Sales",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-04",
+      "persona": "standard",
+      "email": "jumana.mansour@alpha.demo"
+    },
+    {
+      "code": "E017",
+      "name": "Qasim Qureshi",
+      "department": "Engineering",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-05",
+      "persona": "standard",
+      "email": "qasim.qureshi@alpha.demo"
+    },
+    {
+      "code": "E018",
+      "name": "Yasmin Hamdan",
+      "department": "Operations",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-06",
+      "persona": "standard",
+      "email": "yasmin.hamdan@alpha.demo"
+    },
+    {
+      "code": "E019",
+      "name": "Imran Tahir",
+      "department": "Finance",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-07",
+      "persona": "early_bird",
+      "email": "imran.tahir@alpha.demo"
+    },
+    {
+      "code": "E020",
+      "name": "Wafa Hakim",
+      "department": "Sales",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-08",
+      "persona": "early_bird",
+      "email": "wafa.hakim@alpha.demo"
+    },
+    {
+      "code": "E021",
+      "name": "Karim Khoury",
+      "department": "Engineering",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-09",
+      "persona": "late_worker",
+      "email": "karim.khoury@alpha.demo"
+    },
+    {
+      "code": "E022",
+      "name": "Dalia Zaman",
+      "department": "Operations",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-10",
+      "persona": "meeting_heavy",
+      "email": "dalia.zaman@alpha.demo"
+    },
+    {
+      "code": "E023",
+      "name": "Kareem Sheikh",
+      "department": "Finance",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-11",
+      "persona": "meeting_heavy",
+      "email": "kareem.sheikh@alpha.demo"
+    },
+    {
+      "code": "E024",
+      "name": "Rania Jaber",
+      "department": "Sales",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-12",
+      "persona": "remote_today",
+      "email": "rania.jaber@alpha.demo"
+    }
+  ]
+}

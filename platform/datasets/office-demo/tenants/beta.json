@@ -1,0 +1,237 @@
+{
+  "key": "beta",
+  "name": "Oasis Retail Holdings",
+  "hostname": "beta.localhost",
+  "locale": "en",
+  "currency": "AED",
+  "tariffPerKwh": 0.44,
+  "demoMode": true,
+  "brand": {
+    "name": "Oasis Retail Holdings",
+    "shortName": "Oasis",
+    "primaryColor": "#B5451B",
+    "accentColor": "#0F766E",
+    "logo": "brands/beta/logo.svg",
+    "favicon": "brands/beta/favicon.svg",
+    "fontFamily": "Inter, system-ui, sans-serif",
+    "loginTagline": "Facilities intelligence for every store and office."
+  },
+  "employees": [
+    {
+      "code": "E001",
+      "name": "Layla Zaman",
+      "department": "Sales",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-01",
+      "persona": "standard",
+      "email": "layla.zaman@beta.demo"
+    },
+    {
+      "code": "E002",
+      "name": "Sami Sheikh",
+      "department": "Engineering",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-02",
+      "persona": "standard",
+      "email": "sami.sheikh@beta.demo"
+    },
+    {
+      "code": "E003",
+      "name": "Aisha Jaber",
+      "department": "Operations",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-03",
+      "persona": "standard",
+      "email": "aisha.jaber@beta.demo"
+    },
+    {
+      "code": "E004",
+      "name": "Majid Haddad",
+      "department": "Finance",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-04",
+      "persona": "standard",
+      "email": "majid.haddad@beta.demo"
+    },
+    {
+      "code": "E005",
+      "name": "Zara Saleh",
+      "department": "Sales",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-05",
+      "persona": "standard",
+      "email": "zara.saleh@beta.demo"
+    },
+    {
+      "code": "E006",
+      "name": "Nabil Aziz",
+      "department": "Engineering",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-06",
+      "persona": "standard",
+      "email": "nabil.aziz@beta.demo"
+    },
+    {
+      "code": "E007",
+      "name": "Farah Malik",
+      "department": "Operations",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-07",
+      "persona": "early_bird",
+      "email": "farah.malik@beta.demo"
+    },
+    {
+      "code": "E008",
+      "name": "Marwan Kassem",
+      "department": "Finance",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-08",
+      "persona": "early_bird",
+      "email": "marwan.kassem@beta.demo"
+    },
+    {
+      "code": "E009",
+      "name": "Tala Rahman",
+      "department": "Sales",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-09",
+      "persona": "late_worker",
+      "email": "tala.rahman@beta.demo"
+    },
+    {
+      "code": "E010",
+      "name": "Basel Farouk",
+      "department": "Engineering",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-10",
+      "persona": "meeting_heavy",
+      "email": "basel.farouk@beta.demo"
+    },
+    {
+      "code": "E011",
+      "name": "Noor Sabbagh",
+      "department": "Operations",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-11",
+      "persona": "meeting_heavy",
+      "email": "noor.sabbagh@beta.demo"
+    },
+    {
+      "code": "E012",
+      "name": "Adel Barakat",
+      "department": "Finance",
+      "deskRoom": "1.O",
+      "desk": "D-1.O-12",
+      "persona": "remote_today",
+      "email": "adel.barakat@beta.demo"
+    },
+    {
+      "code": "E013",
+      "name": "Reem Shah",
+      "department": "Engineering",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-01",
+      "persona": "standard",
+      "email": "reem.shah@beta.demo"
+    },
+    {
+      "code": "E014",
+      "name": "Ghassan Nair",
+      "department": "Operations",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-02",
+      "persona": "standard",
+      "email": "ghassan.nair@beta.demo"
+    },
+    {
+      "code": "E015",
+      "name": "Nadia Iyer",
+      "department": "Finance",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-03",
+      "persona": "standard",
+      "email": "nadia.iyer@beta.demo"
+    },
+    {
+      "code": "E016",
+      "name": "Usman Nasser",
+      "department": "Sales",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-04",
+      "persona": "standard",
+      "email": "usman.nasser@beta.demo"
+    },
+    {
+      "code": "E017",
+      "name": "Dina Rashid",
+      "department": "Engineering",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-05",
+      "persona": "standard",
+      "email": "dina.rashid@beta.demo"
+    },
+    {
+      "code": "E018",
+      "name": "Rami Darwish",
+      "department": "Operations",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-06",
+      "persona": "standard",
+      "email": "rami.darwish@beta.demo"
+    },
+    {
+      "code": "E019",
+      "name": "Bushra Mansour",
+      "department": "Finance",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-07",
+      "persona": "early_bird",
+      "email": "bushra.mansour@beta.demo"
+    },
+    {
+      "code": "E020",
+      "name": "Amira Qureshi",
+      "department": "Sales",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-08",
+      "persona": "early_bird",
+      "email": "amira.qureshi@beta.demo"
+    },
+    {
+      "code": "E021",
+      "name": "Hana Hamdan",
+      "department": "Engineering",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-09",
+      "persona": "late_worker",
+      "email": "hana.hamdan@beta.demo"
+    },
+    {
+      "code": "E022",
+      "name": "Omar Tahir",
+      "department": "Operations",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-10",
+      "persona": "meeting_heavy",
+      "email": "omar.tahir@beta.demo"
+    },
+    {
+      "code": "E023",
+      "name": "Vida Hakim",
+      "department": "Finance",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-11",
+      "persona": "meeting_heavy",
+      "email": "vida.hakim@beta.demo"
+    },
+    {
+      "code": "E024",
+      "name": "Faris Khoury",
+      "department": "Sales",
+      "deskRoom": "2.O",
+      "desk": "D-2.O-12",
+      "persona": "remote_today",
+      "email": "faris.khoury@beta.demo"
+    }
+  ]
+}
