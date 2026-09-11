@@ -1,0 +1,14 @@
+# Paths the deploy workflow does not copy to the server (rsync --exclude-from)
+node_modules
+.env
+.env.*
+backups
+plans
+e2e/audit
+e2e/test-results
+e2e/playwright-report
+dist
+build
+.react-router
+coverage
+.DS_Store

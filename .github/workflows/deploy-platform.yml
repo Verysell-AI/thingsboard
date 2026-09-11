@@ -1,0 +1,93 @@
+# Deploys platform/ to one server over SSH: copies the sources, writes .env from a secret, builds the
+# images there and restarts the stack (platform/deploy/deploy.sh). First-time tenant provisioning is a
+# manual run with the "provision" input.
+#
+# Secrets:
+#   SSH_ROOT         SSH target, `user@host` (optionally `user@host:port`); `host` alone means ubuntu@host
+#   SSH_PRIVATE_KEY  private key authorised on that server
+#   ENV_FILE         the complete platform/.env for the server (start from platform/.env.dev)
+name: Deploy platform
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'platform/**'
+      - '.github/workflows/deploy-platform.yml'
+  workflow_dispatch:
+    inputs:
+      provision:
+        description: 'After deploying, provision the alpha and beta demo tenants (office-demo dataset, 12 weeks of history)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-platform
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare SSH
+        env:
+          SSH_ROOT: ${{ secrets.SSH_ROOT }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$SSH_ROOT" || { echo "SSH_ROOT secret is empty" >&2; exit 1; }
+          test -n "$SSH_PRIVATE_KEY" || { echo "SSH_PRIVATE_KEY secret is empty" >&2; exit 1; }
+          target=$SSH_ROOT
+          user=ubuntu
+          port=22
+          case "$target" in *@*) user=${target%%@*}; target=${target#*@};; esac
+          case "$target" in *:*) port=${target##*:}; target=${target%%:*};; esac
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "$port" -H "$target" >> ~/.ssh/known_hosts 2>/dev/null
+          {
+            echo "Host deploy"
+            echo "  HostName $target"
+            echo "  Port $port"
+            echo "  User $user"
+            echo "  IdentityFile ~/.ssh/deploy_key"
+            echo "  IdentitiesOnly yes"
+            echo "  ServerAliveInterval 30"
+          } > ~/.ssh/config
+          ssh deploy 'echo "connected as $(whoami) on $(hostname)"; docker compose version'
+
+      - name: Copy sources
+        run: |
+          set -euo pipefail
+          ssh deploy 'mkdir -p ~/platform'
+          rsync -az --delete --exclude-from platform/deploy/rsync-exclude.txt platform/ deploy:platform/
+
+      - name: Write .env
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
+        run: |
+          set -euo pipefail
+          test -n "$ENV_FILE" || { echo "ENV_FILE secret is empty" >&2; exit 1; }
+          printf '%s\n' "$ENV_FILE" | ssh deploy 'umask 077; cat > ~/platform/.env'
+
+      - name: Build and start
+        run: ssh deploy 'bash ~/platform/deploy/deploy.sh'
+
+      - name: Provision demo tenants
+        if: github.event_name == 'workflow_dispatch' && inputs.provision
+        run: |
+          ssh deploy 'set -euo pipefail; cd ~/platform
+            cli="docker compose run --rm --no-deps api node dist/cli.js"
+            for t in alpha beta; do
+              $cli provision --tenant $t --dataset office-demo
+              $cli dataset --tenant $t --dataset office-demo
+              $cli backfill --tenant $t --weeks 12
+            done
+            docker compose restart simulator'
+
+      - name: Report
+        run: ssh deploy 'cd ~/platform && docker compose ps'

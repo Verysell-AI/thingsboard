@@ -1,0 +1,29 @@
+# Server additions on top of docker-compose.yml: Caddy terminates TLS for the console host, the public
+# API host and every tenant hostname (certificates on demand, allowed by the API's /health/hostname).
+# Selected through COMPOSE_FILE in .env, so every `docker compose` and `make` command includes it.
+# Internal services keep their host ports bound to 127.0.0.1 through the *_PORT variables in .env.
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      PLATFORM_HOST: ${PLATFORM_HOST:?PLATFORM_HOST is required on a server}
+      API_HOST: ${API_HOST:?API_HOST is required on a server}
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL is required on a server}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_started
+
+volumes:
+  caddy-data:
+  caddy-config:
