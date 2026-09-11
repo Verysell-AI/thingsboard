@@ -1,0 +1,38 @@
+import { type RouteConfig, index, layout, route } from '@react-router/dev/routes';
+
+export default [
+  route('login', 'routes/login.tsx'),
+  route('admin/login', 'routes/admin.login.tsx'),
+  layout('routes/admin.tsx', [
+    route('admin', 'routes/admin.home.tsx'),
+    route('admin/tenants/new', 'routes/admin.tenants.new.tsx'),
+    route('admin/tenants/:key', 'routes/admin.tenants.$key.tsx'),
+  ]),
+  route('rooms/:id/panel', 'routes/rooms.$id.panel.tsx'),
+  route('m', 'routes/m.tsx'),
+  layout('routes/_shell.tsx', [
+    index('routes/_shell._index.tsx'),
+    route('floors/:floor', 'routes/_shell.floors.$floor.tsx'),
+    route('assets', 'routes/_shell.assets.tsx'),
+    route('employees', 'routes/_shell.employees.tsx'),
+    route('employees/new', 'routes/_shell.employees.new.tsx'),
+    route('rooms', 'routes/_shell.rooms.tsx'),
+    route('rooms/:id', 'routes/_shell.rooms.$id.tsx'),
+    route('automations', 'routes/_shell.automations.tsx'),
+    route('automations/runs', 'routes/_shell.automations.runs.tsx'),
+    route('reports/mornings', 'routes/_shell.reports.mornings.tsx'),
+    route('reports/energy-cost', 'routes/_shell.reports.energy-cost.tsx'),
+    route('reports/savings', 'routes/_shell.reports.savings.tsx'),
+    route('reports/asset-financials', 'routes/_shell.reports.asset-financials.tsx'),
+    route('energy/standby', 'routes/_shell.energy.standby.tsx'),
+    route('energy/ac-health', 'routes/_shell.energy.ac-health.tsx'),
+    route('maintenance', 'routes/_shell.maintenance.tsx'),
+    route('assets/fleet', 'routes/_shell.assets.fleet.tsx'),
+    route('rooms/utilisation', 'routes/_shell.rooms.utilisation.tsx'),
+    route('calendar', 'routes/_shell.calendar.tsx'),
+    route('energy', 'routes/_shell.energy.tsx'),
+    route('notifications', 'routes/_shell.notifications.tsx'),
+    route('audit', 'routes/_shell.audit.tsx'),
+    route('console', 'routes/_shell.console.tsx'),
+  ]),
+] satisfies RouteConfig;
