@@ -5,6 +5,8 @@ import {
   PersonasSchema,
   TenantDatasetSchema,
   WorldSchema,
+  retargetTenantDataset,
+  tenantFileFor,
   type Personas,
   type TenantDataset,
   type World,
@@ -50,28 +52,17 @@ export async function listDatasets(datasetsDir: string): Promise<string[]> {
     .sort();
 }
 
-/** Copies another tenant's file for a key the dataset does not ship, e.g. one created in the console. */
-function retarget(template: TenantDataset, tenantKey: string): TenantDataset {
-  const from = `@${template.key}.`;
-  const to = `@${tenantKey}.`;
-  return {
-    ...template,
-    key: tenantKey,
-    hostname: `${tenantKey}.localhost`,
-    employees: template.employees.map((e) => ({ ...e, email: e.email.replace(from, to) })),
-  };
-}
-
-async function readTenantFile(root: string, tenantKey: string): Promise<TenantDataset> {
+async function readTenantFile(
+  root: string,
+  tenantKey: string,
+  platformHost: string,
+): Promise<TenantDataset> {
   const dir = join(root, 'tenants');
-  const own = join(dir, `${tenantKey}.json`);
-  const files = (await readdir(dir)).filter((f) => f.endsWith('.json')).sort();
-  if (!files.includes(`${tenantKey}.json`)) {
-    const template = files[0];
-    if (!template) throw new Error(`dataset ${root} has no tenant files`);
-    return retarget(TenantDatasetSchema.parse(await readJson(join(dir, template))), tenantKey);
-  }
-  const tenant = TenantDatasetSchema.parse(await readJson(own));
+  const pick = tenantFileFor(await readdir(dir), tenantKey);
+  if (!pick) throw new Error(`dataset ${root} has no tenant files`);
+  const tenant = TenantDatasetSchema.parse(await readJson(join(dir, pick.file)));
+  // A key the dataset does not ship (a tenant created in the console) reuses the first file.
+  if (pick.template) return retargetTenantDataset(tenant, tenantKey, platformHost);
   if (tenant.key !== tenantKey)
     throw new Error(`tenants/${tenantKey}.json declares key ${tenant.key}`);
   return tenant;
@@ -82,11 +73,12 @@ export async function loadDataset(
   datasetsDir: string,
   datasetName: string,
   tenantKey: string,
+  platformHost = 'localhost',
 ): Promise<LoadedDataset> {
   const root = resolve(datasetsDir, datasetName);
   const world = WorldSchema.parse(await readJson(join(root, 'world.json')));
   const personas = PersonasSchema.parse(await readJson(join(root, 'personas.json')));
-  const tenant = await readTenantFile(root, tenantKey);
+  const tenant = await readTenantFile(root, tenantKey, platformHost);
   const logo = await readBrandAsset(join(root, tenant.brand.logo));
   const favicon = tenant.brand.favicon
     ? await readBrandAsset(join(root, tenant.brand.favicon))

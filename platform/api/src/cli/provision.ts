@@ -143,13 +143,18 @@ export async function provision(
   const key = opts.tenant;
   if (!/^[a-z][a-z0-9-]{1,30}$/.test(key)) throw new Error(`invalid tenant key ${key}`);
 
-  const ds = opts.dataset ? await loadDataset(config.DATASETS_DIR, opts.dataset, key) : null;
+  const ds = opts.dataset
+    ? await loadDataset(config.DATASETS_DIR, opts.dataset, key, config.PLATFORM_HOST)
+    : null;
   const existing = await container.tenants.byKey(key);
   const settings = opts.settings ?? {};
   // operator settings win over the dataset: the console names the tenant, the dataset fills the rest
   const displayName = settings.name ?? ds?.tenant.name ?? existing?.name ?? key;
   const hostname =
-    settings.hostname ?? ds?.tenant.hostname ?? existing?.hostname ?? `${key}.${config.PLATFORM_HOST}`;
+    settings.hostname ??
+    ds?.tenant.hostname ??
+    existing?.hostname ??
+    `${key}.${config.PLATFORM_HOST}`;
   const demoMode =
     settings.demoMode ?? ds?.tenant.demoMode ?? existing?.demoMode ?? Boolean(opts.demo);
 

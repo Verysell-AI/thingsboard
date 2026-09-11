@@ -183,7 +183,12 @@ export async function loadDatasetIntoTenant(
   const started = Date.now();
   const log = opts.log ?? (() => undefined);
   const { config } = container;
-  const ds = await loadDataset(config.DATASETS_DIR, opts.dataset, opts.tenant);
+  const ds = await loadDataset(
+    config.DATASETS_DIR,
+    opts.dataset,
+    opts.tenant,
+    config.PLATFORM_HOST,
+  );
   const { world } = ds;
 
   const tenant = await withoutTenant(

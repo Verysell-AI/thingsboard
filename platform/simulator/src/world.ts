@@ -1,9 +1,11 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   PersonasSchema,
   TenantDatasetSchema,
   WorldSchema,
+  retargetTenantDataset,
+  tenantFileFor,
   datasetAccessToken,
   laptopCodeFor,
   type DeviceType,
@@ -88,7 +90,18 @@ export function loadTenantDataset(
   dataset: string,
   tenantKey: string,
 ): TenantDataset {
-  const path = join(datasetsDir, dataset, 'tenants', `${tenantKey}.json`);
+  const dir = join(datasetsDir, dataset, 'tenants');
+  const path = join(dir, `${tenantKey}.json`);
+  if (!existsSync(path)) {
+    // A tenant created in the console has no file of its own: reuse the first shipped one, as
+    // the API does when it loads the dataset, so device codes and tokens line up.
+    const pick = tenantFileFor(readdirSync(dir), tenantKey);
+    if (!pick) throw new Error(`dataset ${dataset} has no tenant files`);
+    return retargetTenantDataset(
+      TenantDatasetSchema.parse(readJson(join(dir, pick.file))),
+      tenantKey,
+    );
+  }
   const tenant = TenantDatasetSchema.parse(readJson(path));
   if (tenant.key !== tenantKey) {
     throw new Error(`tenant file ${path} declares key ${tenant.key}, expected ${tenantKey}`);
