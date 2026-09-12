@@ -78,7 +78,8 @@
       "displayName": "Display name",
       "dataset": "Dataset",
       "datasetNone": "None — empty tenant",
-      "simulatorCaveat": "Live telemetry only runs for tenants listed in SIM_TENANTS; add the key there and restart the simulator to see moving data."
+      "simulated": "Simulated devices (virtual telemetry from the simulator)",
+      "simulatedHint": "On: the simulator drives this tenant’s devices and picks the tenant up within a minute. Off: the tenant connects real hardware."
     },
     "brand": {
       "shortName": "Short name",

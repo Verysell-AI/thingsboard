@@ -66,8 +66,10 @@ From there an operator can create a tenant with its key, hostname, locale, curre
 tenant's users, load a dataset or delete the tenant. Provisioning runs in the background and the console
 streams its log.
 
-Live telemetry is a separate switch: the simulator only drives tenants listed in `SIM_TENANTS` in `.env`, so
-add a new key there and `docker compose restart simulator` to see moving data.
+Live telemetry is a per-tenant switch: **Simulated devices** in the platform console (on by default when a
+dataset is loaded). The simulator asks the API which tenants to drive, is told about changes at once and
+re-checks every minute, so a tenant created in the console gets moving data without any restart. Setting
+`SIM_TENANTS` in `.env` overrides this with a fixed list.
 
 ## Automations, sweep and morning report
 

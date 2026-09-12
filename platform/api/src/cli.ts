@@ -46,6 +46,7 @@ program
         tenant: r.tenant.key,
         hostname: r.tenant.hostname,
         demoMode: r.tenant.demoMode,
+        simulated: r.tenant.simulated,
         tbTenantId: r.tbTenantId,
         serviceUsers: r.users.join(', '),
         deviceProfiles: r.deviceProfiles,

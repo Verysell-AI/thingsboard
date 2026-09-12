@@ -43,6 +43,7 @@ export function toAdminTenant(
     currency: tenant.currency,
     tariffPerKwh: Number(tenant.tariffPerKwh),
     demoMode: tenant.demoMode,
+    simulated: tenant.simulated,
     tbTenantId: tenant.tbTenantId,
     primaryColor: b.primaryColor,
     accentColor: b.accentColor,
@@ -110,6 +111,7 @@ export class AdminTenantsService {
       currency: input.currency,
       tariffPerKwh: input.tariffPerKwh,
       demoMode: input.demoMode,
+      simulated: input.simulated ?? Boolean(input.dataset),
     };
     const dataset = input.dataset ?? undefined;
     return this.c.adminJobs.start('tenant.create', key, async (log) => {
@@ -125,6 +127,7 @@ export class AdminTenantsService {
         log(`user ${input.admin.email} created`);
       }
       if (dataset) await loadDatasetIntoTenant(this.c, { tenant: key, dataset, log });
+      await this.syncSimulator(key, log);
     });
   }
 
@@ -133,7 +136,29 @@ export class AdminTenantsService {
     await this.require(key);
     return this.c.adminJobs.start('tenant.dataset', key, async (log) => {
       await loadDatasetIntoTenant(this.c, { tenant: key, dataset, log });
+      await this.syncSimulator(key, log);
     });
+  }
+
+  /**
+   * Brings the simulator in line with the tenant's `simulated` flag. The simulator also polls the
+   * list, so a push that fails (simulator down, restarting) is logged and picked up later.
+   */
+  private async syncSimulator(key: string, log: (msg: string) => void = () => undefined) {
+    const tenant = await this.c.tenants.byKey(key);
+    try {
+      if (tenant?.simulated) {
+        const r = await this.c.console.syncTenant(key);
+        log(`simulator drives ${r.devices} virtual devices`);
+      } else {
+        await this.c.console.removeTenant(key);
+        log('simulator stopped driving this tenant');
+      }
+    } catch (err) {
+      log(
+        `simulator not updated (${err instanceof Error ? err.message : String(err)}); it re-syncs on its own`,
+      );
+    }
   }
 
   async update(key: string, input: UpdateTenantRequest): Promise<TenantRow> {
@@ -151,6 +176,7 @@ export class AdminTenantsService {
         currency: input.currency ?? tenant.currency,
         tariffPerKwh: String(input.tariffPerKwh ?? tenant.tariffPerKwh),
         demoMode: input.demoMode ?? tenant.demoMode,
+        simulated: input.simulated ?? tenant.simulated,
         brand,
         updatedAt: new Date(),
       })
@@ -160,6 +186,9 @@ export class AdminTenantsService {
       await this.c.tb.sysadmin().renameTenant(tenant.tbTenantId, input.name);
     }
     this.c.tenantResolver.invalidate();
+    if (input.simulated !== undefined && input.simulated !== tenant.simulated) {
+      await this.syncSimulator(key);
+    }
     return row!;
   }
 
@@ -175,6 +204,7 @@ export class AdminTenantsService {
       await this.c.db.app.delete(tenants).where(eq(tenants.id, tenant.id));
       this.c.tenantResolver.invalidate();
       log(`tenant row ${key} deleted`);
+      await this.syncSimulator(key, log);
     });
   }
 

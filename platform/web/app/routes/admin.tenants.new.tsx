@@ -37,6 +37,7 @@ export default function NewTenantRoute() {
   const [currency, setCurrency] = useState('AED');
   const [tariff, setTariff] = useState('0.44');
   const [demoMode, setDemoMode] = useState(false);
+  const [simulated, setSimulated] = useState(true);
   const [dataset, setDataset] = useState('');
   const [brand, setBrand] = useState<BrandDraft>(DEFAULT_BRAND_DRAFT);
   const [adminEmail, setAdminEmail] = useState('');
@@ -61,6 +62,7 @@ export default function NewTenantRoute() {
       currency: currency.trim().toUpperCase(),
       tariffPerKwh: Number(tariff),
       demoMode,
+      simulated,
       ...(dataset ? { dataset } : {}),
       ...(brandInput ? { brand: brandInput } : {}),
       ...(adminEmail.trim()
@@ -252,9 +254,13 @@ export default function NewTenantRoute() {
             <Switch checked={demoMode} onCheckedChange={setDemoMode} id="demo-mode" />
             <Label htmlFor="demo-mode">{t('admin.field.demoMode')}</Label>
           </div>
-          <Alert variant="info">
-            <AlertDescription>{t('admin.field.simulatorCaveat')}</AlertDescription>
-          </Alert>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-3">
+              <Switch checked={simulated} onCheckedChange={setSimulated} id="simulated" />
+              <Label htmlFor="simulated">{t('admin.field.simulated')}</Label>
+            </div>
+            <p className="text-xs text-muted-foreground">{t('admin.field.simulatedHint')}</p>
+          </div>
         </CardContent>
       </Card>
 

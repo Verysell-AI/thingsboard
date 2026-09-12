@@ -32,6 +32,8 @@ export const tenants = pgTable('tenants', {
   tariffPerKwh: numeric('tariff_per_kwh', { precision: 10, scale: 4 }).notNull().default('0.44'),
   currency: text('currency').notNull().default('AED'),
   demoMode: boolean('demo_mode').notNull().default(false),
+  /** The simulator drives this tenant's devices (see GET /internal/tenants/simulated). */
+  simulated: boolean('simulated').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });

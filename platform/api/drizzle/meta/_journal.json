@@ -22,6 +22,13 @@
       "when": 1789028759823,
       "tag": "0002_hourly_stats_standby",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789190965225,
+      "tag": "0003_tenant_simulated",
+      "breakpoints": true
     }
   ]
 }

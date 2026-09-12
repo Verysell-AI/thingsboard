@@ -18,6 +18,7 @@ export interface TenantSettings {
   currency: string;
   tariffPerKwh: number;
   demoMode: boolean;
+  simulated: boolean;
 }
 
 export interface ProvisionOptions {
@@ -157,6 +158,8 @@ export async function provision(
     `${key}.${config.PLATFORM_HOST}`;
   const demoMode =
     settings.demoMode ?? ds?.tenant.demoMode ?? existing?.demoMode ?? Boolean(opts.demo);
+  // a dataset brings virtual devices, so the simulator drives them unless told otherwise
+  const simulated = settings.simulated ?? existing?.simulated ?? Boolean(ds);
 
   const sys = await sysadminClient(container, config, log);
   let tbTenantId = existing?.tbTenantId ?? null;
@@ -224,6 +227,7 @@ export async function provision(
         settings.tariffPerKwh ?? ds?.tenant.tariffPerKwh ?? row?.tariffPerKwh ?? 0.44,
       ),
       demoMode,
+      simulated,
       updatedAt: new Date(),
     };
     if (row) {

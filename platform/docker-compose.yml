@@ -234,7 +234,7 @@ services:
       SIM_MQTT_URL: mqtt://thingsboard:1883
       API_URL: http://api:4000
       INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN}
-      SIM_TENANTS: ${SIM_TENANTS:-alpha,beta}
+      SIM_TENANTS: ${SIM_TENANTS:-}
       SIM_DATASET: ${SIM_DATASET:-office-demo}
       SIM_TICK_MS: ${SIM_TICK_MS:-10000}
       DATASETS_DIR: /app/datasets

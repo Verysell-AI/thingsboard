@@ -41,6 +41,19 @@ export const SimulatorAddDeviceSchema = z.object({
 });
 export type SimulatorAddDevice = z.infer<typeof SimulatorAddDeviceSchema>;
 
+/** Tenants the simulator should drive, served by GET /internal/tenants/simulated. */
+export const SimulatedTenantsResponseSchema = z.object({
+  items: z.array(z.object({ key: z.string() })),
+});
+export type SimulatedTenantsResponse = z.infer<typeof SimulatedTenantsResponseSchema>;
+
+/** Answer to PUT simulator/tenants/:key (tenant world loaded or reloaded). */
+export const SimulatorTenantSchema = z.object({
+  key: z.string(),
+  devices: z.number().int().min(0),
+});
+export type SimulatorTenant = z.infer<typeof SimulatorTenantSchema>;
+
 /** Snapshot returned by GET simulator/state. */
 export const SimulatorDeviceStateSchema = z.object({
   tenant: z.string(),

@@ -50,6 +50,7 @@ export const AdminTenantSchema = z.object({
   currency: z.string(),
   tariffPerKwh: z.number(),
   demoMode: z.boolean(),
+  simulated: z.boolean(),
   tbTenantId: z.string().nullable(),
   primaryColor: z.string(),
   accentColor: z.string(),
@@ -80,6 +81,8 @@ const tenantSettings = {
   currency: z.string().min(3).max(3),
   tariffPerKwh: z.number().positive().max(100),
   demoMode: z.boolean(),
+  /** The simulator drives this tenant's devices; off for a tenant that connects real hardware. */
+  simulated: z.boolean(),
 };
 
 export const CreateTenantRequestSchema = z.object({
@@ -89,6 +92,8 @@ export const CreateTenantRequestSchema = z.object({
   currency: tenantSettings.currency.default('AED'),
   tariffPerKwh: tenantSettings.tariffPerKwh.default(0.44),
   demoMode: tenantSettings.demoMode.default(false),
+  /** Defaults to "on" when a dataset is loaded, "off" for an empty tenant. */
+  simulated: tenantSettings.simulated.optional(),
   key: TenantKeySchema,
   brand: BrandInputSchema.optional(),
   /** Dataset folder to load after provisioning (e.g. office-demo); null loads nothing. */

@@ -83,6 +83,11 @@ export class TenantsService {
     return rows[0] ?? null;
   }
 
+  /** Tenants whose devices the simulator drives. */
+  async simulated(): Promise<TenantRow[]> {
+    return this.db.select().from(tenants).where(eq(tenants.simulated, true));
+  }
+
   async all(): Promise<TenantRow[]> {
     return this.db.select().from(tenants);
   }

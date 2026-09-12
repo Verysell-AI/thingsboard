@@ -146,7 +146,24 @@ export class Simulation {
     };
     this.tenants.set(world.tenant.key, runtime);
     for (const spec of world.devices) this.addDevice(spec);
+    if (this.timer) {
+      // added while running (tenant created in the console): bring the day's devices online now
+      const now = this.now(world.tenant.key);
+      for (const link of runtime.links.values())
+        if (link.device.shouldBeOnline(now)) link.connect();
+      runtime.lastVirtualTick = now;
+    }
     return registry;
+  }
+
+  /** Disconnects every device of a tenant and forgets it; false when the tenant is unknown. */
+  removeTenant(tenant: string): boolean {
+    const runtime = this.tenants.get(tenant);
+    if (!runtime) return false;
+    for (const link of runtime.links.values()) link.disconnect();
+    this.tenants.delete(tenant);
+    this.opts.log.info({ tenant }, 'tenant removed from the simulation');
+    return true;
   }
 
   addDevice(spec: DeviceSpec): DeviceLink {

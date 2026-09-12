@@ -4,6 +4,7 @@ import type {
   ScenarioParams,
   ScenarioResult,
   SimulatorState,
+  SimulatorTenant,
 } from '@platform/shared/dto';
 import type { ClockSnapshot, ClockState } from '@platform/shared/clock';
 import { INTERNAL_TOKEN_HEADER } from '@platform/shared/contracts';
@@ -69,6 +70,21 @@ export class ConsoleService {
     attrs: Record<string, string | number | boolean>;
   }): Promise<void> {
     return this.call('POST', `/devices?tenant=${encodeURIComponent(input.tenant)}`, input);
+  }
+
+  /** Tells the simulator to load (or reload) a tenant's world; it reads the dataset itself. */
+  syncTenant(tenantKey: string): Promise<SimulatorTenant> {
+    return this.call('PUT', `/tenants/${encodeURIComponent(tenantKey)}`);
+  }
+
+  /** Stops driving a tenant's devices; a tenant the simulator does not know is fine. */
+  async removeTenant(tenantKey: string): Promise<void> {
+    try {
+      await this.call('DELETE', `/tenants/${encodeURIComponent(tenantKey)}`);
+    } catch (err) {
+      if (err instanceof AppError && err.status === 404) return;
+      throw err;
+    }
   }
 
   removeDevice(tenantKey: string, code: string): Promise<void> {

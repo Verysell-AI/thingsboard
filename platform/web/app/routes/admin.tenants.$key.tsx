@@ -140,6 +140,7 @@ function SettingsTab({ tenant }: { tenant: AdminTenant }) {
   const [currency, setCurrency] = useState(tenant.currency);
   const [tariff, setTariff] = useState(String(tenant.tariffPerKwh));
   const [demoMode, setDemoMode] = useState(tenant.demoMode);
+  const [simulated, setSimulated] = useState(tenant.simulated);
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -150,6 +151,7 @@ function SettingsTab({ tenant }: { tenant: AdminTenant }) {
       currency: currency.trim().toUpperCase(),
       tariffPerKwh: Number(tariff),
       demoMode,
+      simulated,
     });
   }
 
@@ -210,6 +212,13 @@ function SettingsTab({ tenant }: { tenant: AdminTenant }) {
             <div className="flex items-center gap-3">
               <Switch id="demo-mode" checked={demoMode} onCheckedChange={setDemoMode} />
               <Label htmlFor="demo-mode">{t('admin.field.demoMode')}</Label>
+            </div>
+            <div className="flex flex-col gap-1 sm:col-span-2">
+              <div className="flex items-center gap-3">
+                <Switch id="simulated" checked={simulated} onCheckedChange={setSimulated} />
+                <Label htmlFor="simulated">{t('admin.field.simulated')}</Label>
+              </div>
+              <p className="text-xs text-muted-foreground">{t('admin.field.simulatedHint')}</p>
             </div>
           </div>
           <SaveRow pending={save.isPending} saved={save.isSuccess} error={save.error} />
@@ -494,9 +503,6 @@ function DangerTab({ tenant }: { tenant: AdminTenant }) {
               {load.isPending ? t('admin.danger.loading') : t('admin.danger.loadDataset')}
             </Button>
           </div>
-          <Alert variant="info">
-            <AlertDescription>{t('admin.field.simulatorCaveat')}</AlertDescription>
-          </Alert>
         </CardContent>
       </Card>
 

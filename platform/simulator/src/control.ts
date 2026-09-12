@@ -14,14 +14,18 @@ import {
   SimulatorAddDeviceSchema,
   SimulatorSetClockSchema,
   SimulatorStateSchema,
+  SimulatorTenantSchema,
 } from '@platform/shared/dto';
 import { ClockSnapshotSchema } from '@platform/shared/clock';
 import type { Simulation } from './simulation.js';
+import type { TenantWorld } from './world.js';
 
 export interface ControlOptions {
   internalToken: string;
-  /** Used when a request does not name a tenant. */
-  defaultTenant: string;
+  /** Used when a request does not name a tenant; falls back to the first loaded tenant. */
+  defaultTenant?: string;
+  /** Reads a tenant's world from the dataset, for PUT /tenants/:key. */
+  loadWorld?: (tenantKey: string) => TenantWorld;
   logger?: boolean | object;
 }
 
@@ -55,7 +59,41 @@ export function buildControlApp(sim: Simulation, opts: ControlOptions): FastifyI
       }
     });
 
-    const resolveTenant = (tenant: string | undefined) => tenant ?? opts.defaultTenant;
+    const resolveTenant = (tenant: string | undefined) =>
+      tenant ?? opts.defaultTenant ?? sim.tenantKeys()[0] ?? 'alpha';
+
+    /** The API pushes tenant changes here (created, dataset loaded, simulation switched on). */
+    secured.put(
+      '/tenants/:key',
+      {
+        schema: {
+          params: z.object({ key: z.string() }),
+          response: { 200: SimulatorTenantSchema },
+        },
+      },
+      async (req, reply) => {
+        if (!opts.loadWorld) return reply.notImplemented('tenant loading is not configured');
+        let world: TenantWorld;
+        try {
+          world = opts.loadWorld(req.params.key);
+        } catch (err) {
+          return reply.badRequest(err instanceof Error ? err.message : String(err));
+        }
+        sim.removeTenant(req.params.key);
+        const registry = sim.addTenant(world);
+        return { key: req.params.key, devices: registry.all().length };
+      },
+    );
+
+    secured.delete(
+      '/tenants/:key',
+      { schema: { params: z.object({ key: z.string() }) } },
+      async (req, reply) => {
+        if (!sim.removeTenant(req.params.key))
+          return reply.notFound(`unknown tenant ${req.params.key}`);
+        return reply.code(204).send();
+      },
+    );
 
     secured.get('/state', { schema: { response: { 200: SimulatorStateSchema } } }, async () =>
       sim.state(),

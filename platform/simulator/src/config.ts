@@ -6,7 +6,9 @@ import { DEFAULT_TIME_ZONE } from '@platform/shared/clock';
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 const EnvSchema = z.object({
-  SIM_TENANTS: z.string().default('alpha,beta'),
+  /** Optional fixed tenant list; empty means: ask the API which tenants are simulated. */
+  SIM_TENANTS: z.string().default(''),
+  SIM_TENANTS_POLL_MS: z.coerce.number().int().min(5_000).default(60_000),
   SIM_DATASET: z.string().default('office-demo'),
   DATASETS_DIR: z.string().default(resolve(packageRoot, '../datasets')),
   SIM_MQTT_URL: z.string().default('mqtt://localhost:1884'),
@@ -22,7 +24,9 @@ const EnvSchema = z.object({
 });
 
 export interface SimulatorConfig {
+  /** Fixed tenant list from SIM_TENANTS; empty when the list comes from the API. */
   tenants: string[];
+  tenantsPollMs: number;
   dataset: string;
   datasetsDir: string;
   mqttUrl: string;
@@ -44,9 +48,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): SimulatorConfi
   const tenants = e.SIM_TENANTS.split(',')
     .map((t) => t.trim())
     .filter((t) => t.length > 0);
-  if (tenants.length === 0) throw new Error('SIM_TENANTS must list at least one tenant');
   return {
     tenants,
+    tenantsPollMs: e.SIM_TENANTS_POLL_MS,
     dataset: e.SIM_DATASET,
     datasetsDir: e.DATASETS_DIR,
     mqttUrl: e.SIM_MQTT_URL,
