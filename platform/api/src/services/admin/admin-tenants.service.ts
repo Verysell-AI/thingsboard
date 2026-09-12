@@ -197,8 +197,16 @@ export class AdminTenantsService {
     const tenant = await this.require(key);
     return this.c.adminJobs.start('tenant.delete', key, async (log) => {
       if (tenant.tbTenantId) {
-        await this.c.tb.sysadmin().deleteTenant(tenant.tbTenantId);
-        log('ThingsBoard tenant deleted');
+        // Belt and braces: never delete a core tenant another platform tenant still points at.
+        const sharedWith = (await this.c.tenants.all()).filter(
+          (t) => t.id !== tenant.id && t.tbTenantId === tenant.tbTenantId,
+        );
+        if (sharedWith.length) {
+          log(`ThingsBoard tenant kept: also used by ${sharedWith.map((t) => t.key).join(', ')}`);
+        } else {
+          await this.c.tb.sysadmin().deleteTenant(tenant.tbTenantId);
+          log('ThingsBoard tenant deleted');
+        }
       }
       this.c.tb.forget(key);
       await this.c.db.app.delete(tenants).where(eq(tenants.id, tenant.id));

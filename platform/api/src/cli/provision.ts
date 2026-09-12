@@ -98,6 +98,16 @@ async function ensureTenantAdmin(
   log(`user ${email} created and activated`);
 }
 
+/** Key of the platform tenant that references this ThingsBoard tenant id, if any. */
+async function tbTenantOwner(container: Container, tbTenantId: string): Promise<string | null> {
+  const rows = await container.db.admin
+    .select({ key: tenants.key })
+    .from(tenants)
+    .where(eq(tenants.tbTenantId, tbTenantId))
+    .limit(1);
+  return rows[0]?.key ?? null;
+}
+
 function brandFromDataset(ds: LoadedDataset): TenantBrand {
   const b = ds.tenant.brand;
   return {
@@ -168,11 +178,17 @@ export async function provision(
     await sys.renameTenant(tbTenantId, displayName);
     log(`ThingsBoard tenant "${displayName}" exists`);
   } else {
+    // Re-provisioning after the platform database was reset adopts the core tenant by title, but
+    // never one that another platform tenant already owns: two tenants with the same display
+    // name must not share (and, on delete, destroy) one core tenant.
     const found = await sys.findTenantByTitle(displayName);
-    if (found) {
+    const owner = found ? await tbTenantOwner(container, found.id!.id) : null;
+    if (found && (owner === null || owner === key)) {
       tbTenantId = found.id!.id;
       log(`ThingsBoard tenant "${displayName}" exists`);
     } else {
+      if (found)
+        log(`ThingsBoard tenant "${displayName}" belongs to tenant ${owner}; creating another`);
       const created = await sys.createTenant(displayName);
       tbTenantId = created.id!.id;
       log(`ThingsBoard tenant "${displayName}" created`);
