@@ -21,11 +21,13 @@ export class ConsoleService {
   private async call<T>(method: string, path: string, body?: unknown): Promise<T> {
     let res;
     try {
+      // No content-type without a body: Fastify rejects an empty JSON body with 400, which
+      // silently broke every bodiless PUT and DELETE to the simulator.
       res = await fetch(`${this.simulatorUrl}${path}`, {
         method,
         headers: {
-          'content-type': 'application/json',
           [INTERNAL_TOKEN_HEADER]: this.internalToken,
+          ...(body === undefined ? {} : { 'content-type': 'application/json' }),
         },
         body: body === undefined ? undefined : JSON.stringify(body),
         dispatcher: this.dispatcher,
