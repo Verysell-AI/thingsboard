@@ -22,6 +22,15 @@ test('the time machine moves the business clock and speeds it up', async ({ page
   await expect(card.getByTestId('tm-time')).toHaveText(/08:4\d/, { timeout: 15_000 });
   await expect(page.getByTestId('clock-time')).toHaveText(/^08:4\d:\d{2}$/);
 
+  // Nobody comes to the office at the weekend: step the business date forward to a weekday.
+  const headerDate = page.getByTestId('clock-time').locator('xpath=..');
+  for (let i = 0; i < 2; i++) {
+    if (!/\b(Sat|Sun),/.test(await headerDate.innerText())) break;
+    await card.getByRole('button', { name: /\+1 day/i }).click();
+    await page.waitForTimeout(1_500);
+  }
+  await expect(headerDate).not.toContainText(/\b(Sat|Sun),/, { timeout: 15_000 });
+
   await card.getByRole('button', { name: /10\s*×|10x/i }).click();
   await shot(page, '11-time-machine-0845-10x');
 

@@ -11,7 +11,7 @@ import {
 
 test.describe.configure({ mode: 'serial' });
 
-const tenantName = 'Gamma Workspaces';
+const tenantName = `${tenant.charAt(0).toUpperCase()}${tenant.slice(1)} Workspaces`;
 
 test('the platform operator signs in to the console', async ({ page }) => {
   await adminLogin(page);
@@ -43,16 +43,14 @@ test('a new tenant is created from the console with the office-demo dataset', as
 
   // The tenant may already exist from an earlier run (and carry backfilled history): keep it.
   // Set LIVE_DELETE_TENANT=1 to remove it in the last test of this file and start afresh.
-  await page.goto(`${adminOrigin}/admin/tenants/${tenant}`);
-  const hostname = page.locator('#hostname');
-  const missing = page.getByText(/not found|unknown tenant|no such tenant/i);
-  await expect(hostname.or(missing).first()).toBeVisible({ timeout: 20_000 });
-  if (await hostname.isVisible()) {
-    await expect(hostname).toHaveValue(`${tenant}.${platformHost}`);
+  // (The console redirects an unknown /admin/tenants/<key> back to the list, so check the list.)
+  await expect(page.getByRole('cell', { name: 'alpha', exact: true })).toBeVisible();
+  if ((await page.getByRole('cell', { name: tenant, exact: true }).count()) > 0) {
+    await page.goto(`${adminOrigin}/admin/tenants/${tenant}`);
+    await expect(page.locator('#hostname')).toHaveValue(`${tenant}.${platformHost}`);
     test.info().annotations.push({ type: 'note', description: `tenant ${tenant} already existed` });
     return;
   }
-  await page.goto(`${adminOrigin}/admin`);
 
   await page.getByRole('link', { name: /new tenant/i }).click();
   await page.waitForURL(/\/admin\/tenants\/new/);
@@ -65,6 +63,8 @@ test('a new tenant is created from the console with the office-demo dataset', as
   const demo = page.locator('#demo-mode');
   if ((await demo.getAttribute('aria-checked')) !== 'true') await demo.click();
   await expect(demo).toHaveAttribute('aria-checked', 'true');
+  // simulated devices default to on, so the tenant gets live telemetry without any server change
+  await expect(page.locator('#simulated')).toHaveAttribute('aria-checked', 'true');
   await shot(page, '02-new-tenant-form');
   await page.getByRole('button', { name: /create tenant/i }).click();
 
