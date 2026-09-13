@@ -30,8 +30,9 @@ export class AutomationsService {
     private readonly timeZone: string,
   ) {}
 
-  async list(tenantId: string): Promise<Automation[]> {
-    return withTenant(this.db, tenantId, async (tx) => {
+  async list(tenant: { id: string; key: string }): Promise<Automation[]> {
+    const lastChecks = await this.engine.lastChecks(tenant.key);
+    return withTenant(this.db, tenant.id, async (tx) => {
       const rows = await tx
         .select()
         .from(automations)
@@ -51,6 +52,7 @@ export class AutomationsService {
           enabled: row.enabled,
           params: row.params,
           lastRun: last ? toRunDto(last) : null,
+          lastCheck: lastChecks[row.key as AutomationKey] ?? null,
           updatedAt: row.updatedAt.toISOString(),
         });
       }
@@ -58,7 +60,11 @@ export class AutomationsService {
     });
   }
 
-  async update(tenantId: string, key: AutomationKey, input: UpdateAutomation): Promise<Automation> {
+  async update(
+    tenant: { id: string; key: string },
+    key: AutomationKey,
+    input: UpdateAutomation,
+  ): Promise<Automation> {
     let params: Record<string, unknown> | undefined;
     if (input.params !== undefined) {
       const parsed = AUTOMATION_PARAMS[key].safeParse(input.params);
@@ -68,7 +74,7 @@ export class AutomationsService {
         );
       params = parsed.data as Record<string, unknown>;
     }
-    await withTenant(this.db, tenantId, async (tx) => {
+    await withTenant(this.db, tenant.id, async (tx) => {
       const [existing] = await tx
         .select()
         .from(automations)
@@ -91,7 +97,7 @@ export class AutomationsService {
         after: { enabled: input.enabled ?? existing.enabled, params: params ?? existing.params },
       });
     });
-    const all = await this.list(tenantId);
+    const all = await this.list(tenant);
     return all.find((a) => a.key === key)!;
   }
 

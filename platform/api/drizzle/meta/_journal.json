@@ -29,6 +29,13 @@
       "when": 1789190965225,
       "tag": "0003_tenant_simulated",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789269601220,
+      "tag": "0004_automation_runs_indexes",
+      "breakpoints": true
     }
   ]
 }

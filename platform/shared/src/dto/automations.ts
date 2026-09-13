@@ -91,12 +91,28 @@ export const AutomationRunSchema = z.object({
 });
 export type AutomationRun = z.infer<typeof AutomationRunSchema>;
 
+/**
+ * The most recent evaluation of an automation. Scheduled ticks that decide nothing are not kept in
+ * the run history, so this is how the UI shows the schedule is alive between recorded runs.
+ */
+export const AutomationLastCheckSchema = z.object({
+  /** Real time of the evaluation. */
+  at: z.string(),
+  /** Business time it evaluated. */
+  businessTime: z.number(),
+  /** Whether that evaluation was written to the run history. */
+  recorded: z.boolean(),
+});
+export type AutomationLastCheck = z.infer<typeof AutomationLastCheckSchema>;
+
 export const AutomationSchema = z.object({
   id: IdSchema,
   key: AutomationKeySchema,
   enabled: z.boolean(),
   params: z.record(z.string(), z.unknown()),
+  /** Last run kept in the history; scheduled ticks that decided nothing are not recorded. */
   lastRun: AutomationRunSchema.nullable(),
+  lastCheck: AutomationLastCheckSchema.nullable(),
   updatedAt: z.string(),
 });
 export type Automation = z.infer<typeof AutomationSchema>;

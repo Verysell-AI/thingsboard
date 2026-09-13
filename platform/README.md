@@ -80,7 +80,10 @@ so from `/console` "Jump to 19:55" then speed 10× shows the 20:00 sweep happen 
 stays" keeps one person's zone on and sends them the phone prompt. Peak shedding sheds one step per
 evaluation while the building load exceeds the threshold inside its window (or on "Shed now" on the
 Energy page) and restores everything once the load has stayed low for ten minutes; a "Peak load" alarm
-from the IoT core triggers an immediate evaluation.
+from the IoT core triggers an immediate evaluation. Every enabled automation is evaluated each minute,
+but only runs that acted (a command, a released booking, a notification, a closed sweep day or a
+peak-shedding state change) and every manual run are kept in the run history; each automation card
+still shows when the schedule last checked it.
 
 The morning report is generated once the business clock passes 07:00 (and from `/reports/mornings` or
 the console on demand), stored per business date and emailed to the tenant's operations managers with the

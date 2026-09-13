@@ -343,5 +343,38 @@ describe.skipIf(!integrationEnabled)(
       });
       expect(beta.statusCode).toBe(404);
     });
+
+    it('a scheduled tick that decides nothing leaves no run behind but shows as checked', async () => {
+      const before = (
+        await t.fastify.inject({ method: 'GET', url: '/automations/runs', headers: auth(opsToken) })
+      ).json().total as number;
+      const tenant = {
+        id: t.alpha.id,
+        key: 'alpha',
+        tariffPerKwh: Number(t.alpha.tariffPerKwh),
+        demoMode: t.alpha.demoMode,
+      };
+      const recorded = await runWithContext(
+        { requestId: 'tick', tenantId: t.alpha.id, tenantKey: 'alpha' },
+        () => t.container.engine.run(tenant, { trigger: 'schedule' }),
+      );
+      // no bookings to pre-cool for, no holiday, no floor meter: nothing to record for these
+      const quiet = ['precool', 'holiday_mode', 'peak_shedding'];
+      expect(recorded.map((r) => r.key).filter((k) => quiet.includes(k))).toEqual([]);
+      const after = (
+        await t.fastify.inject({ method: 'GET', url: '/automations/runs', headers: auth(opsToken) })
+      ).json().total as number;
+      expect(after - before).toBe(recorded.length);
+
+      const list = await t.fastify.inject({
+        method: 'GET',
+        url: '/automations',
+        headers: auth(opsToken),
+      });
+      const precool = list.json().items.find((a: { key: string }) => a.key === 'precool');
+      expect(precool.lastRun).toBeNull();
+      expect(precool.lastCheck).toMatchObject({ recorded: false });
+      expect(Date.now() - Date.parse(precool.lastCheck.at)).toBeLessThan(60_000);
+    });
   },
 );

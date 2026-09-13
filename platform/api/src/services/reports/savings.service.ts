@@ -1,4 +1,4 @@
-import { and, desc, eq, isNotNull } from 'drizzle-orm';
+import { and, eq, isNotNull, sql } from 'drizzle-orm';
 import { zonedDateParts, zonedDayKey, zonedTimeToEpoch } from '@platform/shared/clock';
 import type { SavingsFloor, SavingsReport } from '@platform/shared/dto';
 import type { Db } from '../../db/index.js';
@@ -55,19 +55,15 @@ export class SavingsService {
 
   /** The first business day the evening sweep actually ran; null before any sweep. */
   async automationSince(tenantId: string): Promise<string | null> {
-    const rows = await withTenant(this.db, tenantId, (tx) =>
+    const [row] = await withTenant(this.db, tenantId, (tx) =>
       tx
-        .select({ summary: automationRuns.summary })
+        .select({ since: sql<string | null>`min(${automationRuns.summary} ->> 'actedDay')` })
         .from(automationRuns)
-        .where(eq(automationRuns.key, 'evening_sweep'))
-        .orderBy(desc(automationRuns.startedAt))
-        .limit(500),
+        .where(
+          and(eq(automationRuns.key, 'evening_sweep'), sql`${automationRuns.summary} ? 'actedDay'`),
+        ),
     );
-    const days = rows
-      .map((r) => r.summary.actedDay)
-      .filter((d): d is string => typeof d === 'string')
-      .sort();
-    return days[0] ?? null;
+    return row?.since ?? null;
   }
 
   /** Night kWh per evening date per floor over [from, to). */

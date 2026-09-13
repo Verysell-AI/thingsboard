@@ -45,7 +45,7 @@ export async function tenantsToSchedule(container: Container): Promise<TenantRow
       out.push(t);
       continue;
     }
-    const list = await container.automations.list(t.id).catch(() => []);
+    const list = await container.automations.list(t).catch(() => []);
     if (list.some((a) => a.enabled)) out.push(t);
   }
   return out;

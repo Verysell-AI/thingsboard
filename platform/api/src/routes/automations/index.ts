@@ -35,7 +35,7 @@ const routes: FastifyPluginAsyncZod = async (fastify) => {
         response: { 200: AutomationsResponseSchema },
       },
     },
-    async (request) => ({ items: await fastify.services.automations.list(request.tenant!.id) }),
+    async (request) => ({ items: await fastify.services.automations.list(request.tenant!) }),
   );
 
   fastify.get(
@@ -78,7 +78,7 @@ const routes: FastifyPluginAsyncZod = async (fastify) => {
       },
     },
     async (request) =>
-      fastify.services.automations.update(request.tenant!.id, request.params.key, request.body),
+      fastify.services.automations.update(request.tenant!, request.params.key, request.body),
   );
 
   fastify.post(

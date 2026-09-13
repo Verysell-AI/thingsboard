@@ -20,7 +20,7 @@ const routes: FastifyPluginAsyncZod = async (fastify) => {
     async (request) => {
       const tenant = request.tenant!;
       const now = await fastify.services.clock.now(tenant.key);
-      const holiday = (await fastify.services.automations.list(tenant.id)).find(
+      const holiday = (await fastify.services.automations.list(tenant)).find(
         (a) => a.key === 'holiday_mode',
       );
       const holidays = holiday ? parseAutomationParams('holiday_mode', holiday.params).dates : [];

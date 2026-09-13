@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { and, eq, gt, inArray, isNotNull } from 'drizzle-orm';
 import { redisKeys } from '@platform/shared/contracts';
 import {
@@ -5,6 +6,8 @@ import {
   PeakSheddingStateSchema,
   parseAutomationParams,
   type AutomationKey,
+  AutomationLastCheckSchema,
+  type AutomationLastCheck,
   type AutomationRun,
   type Decision,
   type PeakSheddingState,
@@ -64,6 +67,9 @@ export interface RunOptions {
 
 const actedDayKey = (tenant: string, key: string) => `automations:${tenant}:${key}:actedDay`;
 const shedStateKey = (tenant: string) => `automations:${tenant}:peak_shedding:state`;
+const lastCheckKey = (tenant: string, key: string) => `automations:${tenant}:${key}:lastCheck`;
+/** How long the "last checked" marker outlives the last tick. */
+const LAST_CHECK_TTL_S = 7 * 86_400;
 
 /** Delay between successive device commands so a sweep is visible room by room. */
 export const COMMAND_SPACING_MS = 300;
@@ -89,6 +95,32 @@ function meterEnergy(state: {
   const meter = state.devices.find((d) => d.deviceType === 'room_meter');
   const v = meter ? Number(meter.values.energy_kwh) : NaN;
   return Number.isFinite(v) ? v : null;
+}
+
+/**
+ * Whether a run is worth a row in the history. Scheduled ticks fire every minute and most of them
+ * decide nothing, so only ticks that acted (a command, a release, a notification), closed a sweep
+ * day, or moved the peak-shedding state machine are recorded; every other trigger (manual runs,
+ * notification actions, backfills) is always kept. Pure.
+ */
+export function worthRecording(
+  trigger: string,
+  decisions: Decision[],
+  previousShedState: PeakSheddingState,
+): boolean {
+  if (trigger !== 'schedule') return true;
+  for (const d of decisions) {
+    if (d.kind === 'command' || d.kind === 'release_booking' || d.kind === 'notify') return true;
+    if (d.kind !== 'summary') continue;
+    if (typeof d.data.actedDay === 'string') return true;
+    const shed = PeakSheddingStateSchema.safeParse(d.data.shedState);
+    if (
+      shed.success &&
+      (shed.data.status !== previousShedState.status || shed.data.level !== previousShedState.level)
+    )
+      return true;
+  }
+  return false;
 }
 
 /** Counts a run's decisions into the summary shape the web and the morning report read. */
@@ -293,7 +325,21 @@ export class AutomationEngine {
     return meters.reduce((sum, d) => sum + Number(d.values.power_w), 0) / 1000;
   }
 
-  /** One tick (or manual run) for a tenant. Returns the runs written. */
+  /** When each automation was last evaluated, recorded or not; null before the first tick. */
+  async lastChecks(
+    tenantKey: string,
+  ): Promise<Partial<Record<AutomationKey, AutomationLastCheck>>> {
+    const out: Partial<Record<AutomationKey, AutomationLastCheck>> = {};
+    for (const key of AUTOMATION_KEYS) {
+      const raw = await this.redis.get(lastCheckKey(tenantKey, key));
+      if (!raw) continue;
+      const parsed = AutomationLastCheckSchema.safeParse(JSON.parse(raw));
+      if (parsed.success) out[key] = parsed.data;
+    }
+    return out;
+  }
+
+  /** One tick (or manual run) for a tenant. Returns the runs recorded. */
   async run(tenant: EngineTenant, opts: RunOptions): Promise<AutomationRun[]> {
     const token = await this.acquireLock(tenant.key, opts.only ? 5_000 : 0);
     if (!token) {
@@ -320,7 +366,10 @@ export class AutomationEngine {
         excludeUserIds: opts.excludeUserIds,
       });
       const runs: AutomationRun[] = [];
-      for (const row of selected) runs.push(await this.runOne(tenant, row, ctx, opts));
+      for (const row of selected) {
+        const run = await this.runOne(tenant, row, ctx, opts);
+        if (run) runs.push(run);
+      }
       return runs;
     } finally {
       await this.releaseLock(tenant.key, token);
@@ -332,31 +381,40 @@ export class AutomationEngine {
     row: AutomationRow,
     ctx: RuleContext,
     opts: RunOptions,
-  ): Promise<AutomationRun> {
+  ): Promise<AutomationRun | null> {
     const key = row.key as AutomationKey;
     const rule = ruleFor(key);
-    const started = await withTenant(this.db, tenant.id, async (tx) => {
-      const [r] = await tx
-        .insert(automationRuns)
-        .values({
-          tenantId: tenant.id,
-          key,
-          trigger: opts.trigger,
-          startedAt: new Date(this.realNow()),
-          summary: { businessTime: ctx.now, trigger: opts.trigger },
-        })
-        .returning();
-      return r!;
-    });
-    await this.emitRun(tenant.key, key, started.id, 'started');
-
+    const startedAt = this.realNow();
     const decisions: Decision[] = rule
       ? rule.evaluate(ctx, parseAutomationParams(key, row.params))
       : [{ kind: 'note', message: `no rule available for ${key} yet` }];
+    const recorded = worthRecording(opts.trigger, decisions, ctx.shedState);
+    const started = recorded
+      ? await withTenant(this.db, tenant.id, async (tx) => {
+          const [r] = await tx
+            .insert(automationRuns)
+            .values({
+              tenantId: tenant.id,
+              key,
+              trigger: opts.trigger,
+              startedAt: new Date(startedAt),
+              summary: { businessTime: ctx.now, trigger: opts.trigger },
+            })
+            .returning();
+          return r!;
+        })
+      : null;
+    const runId = started?.id ?? randomUUID();
+    if (started) await this.emitRun(tenant.key, key, runId, 'started');
     const counters = { commandsSent: 0, commandsFailed: 0, released: 0, notified: 0 };
 
     await runWithContext(
-      { ...getContext(), tenantId: tenant.id, tenantKey: tenant.key, automationRunId: started.id },
+      {
+        ...getContext(),
+        tenantId: tenant.id,
+        tenantKey: tenant.key,
+        automationRunId: started?.id ?? null,
+      },
       async () => {
         let first = true;
         for (const d of decisions) {
@@ -367,7 +425,7 @@ export class AutomationEngine {
               try {
                 await this.commands.sendRpc(tenant, d.assetId, d.method, d.params, {
                   source: 'AUTOMATION',
-                  automationRunId: started.id,
+                  automationRunId: started?.id,
                 });
                 counters.commandsSent++;
               } catch {
@@ -415,6 +473,7 @@ export class AutomationEngine {
       ...counters,
       decisions: decisions.slice(0, MAX_STORED_DECISIONS),
       ruleAvailable: Boolean(rule),
+      recorded,
     };
     if (typeof summary.actedDay === 'string')
       await this.redis.set(actedDayKey(tenant.key, key), summary.actedDay, 'EX', 3 * 86_400);
@@ -425,6 +484,21 @@ export class AutomationEngine {
         'EX',
         30 * 86_400,
       );
+    const lastCheck: AutomationLastCheck = {
+      at: new Date(startedAt).toISOString(),
+      businessTime: ctx.now,
+      recorded,
+    };
+    await this.redis.set(
+      lastCheckKey(tenant.key, key),
+      JSON.stringify(lastCheck),
+      'EX',
+      LAST_CHECK_TTL_S,
+    );
+    if (!started) {
+      await this.emitRun(tenant.key, key, runId, 'finished', summary);
+      return null;
+    }
     const finished = await withTenant(this.db, tenant.id, async (tx) => {
       const [r] = await tx
         .update(automationRuns)
@@ -433,7 +507,7 @@ export class AutomationEngine {
         .returning();
       return r!;
     });
-    await this.emitRun(tenant.key, key, started.id, 'finished', summary);
+    await this.emitRun(tenant.key, key, runId, 'finished', summary);
     return toRunDto(finished);
   }
 

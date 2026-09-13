@@ -9,7 +9,9 @@
     "notFound": "Page not found",
     "notFoundDetail": "The page you asked for does not exist.",
     "menu": "Menu",
-    "closeMenu": "Close menu"
+    "closeMenu": "Close menu",
+    "collapseMenu": "Collapse menu",
+    "expandMenu": "Expand menu"
   },
   "nav": {
     "floorPlan": "Floor plan",
@@ -141,6 +143,8 @@
   "floor": {
     "title": "Floor {{floor}}",
     "switch": "Floor",
+    "hideDetails": "Hide details panel",
+    "showDetails": "Show details panel",
     "legend": "Legend",
     "lightOn": "Lights on",
     "lightOff": "Lights off",
@@ -624,7 +628,7 @@
     "subtitle": "Rules that switch, release and notify on their own. Each one can be tuned or run by hand.",
     "viewRuns": "Run history",
     "runs": "Automation runs",
-    "runsSubtitle": "Every evaluation with what it decided and why.",
+    "runsSubtitle": "Runs that acted, with what they decided and why. Checks that found nothing to do are not kept.",
     "back": "Back to automations",
     "filterKey": "Automation",
     "allKeys": "All automations",
@@ -638,6 +642,7 @@
     "runNow": "Run now",
     "lastRun": "Last run",
     "neverRan": "Has not run yet.",
+    "lastCheck": "Last checked {{time}} · nothing to do",
     "running": "Running",
     "decisions": "Decisions",
     "until": "until",

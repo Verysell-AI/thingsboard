@@ -1,0 +1,2 @@
+CREATE INDEX "automation_runs_tenant_started_idx" ON "automation_runs" USING btree ("tenant_id","started_at");--> statement-breakpoint
+CREATE INDEX "automation_runs_tenant_key_started_idx" ON "automation_runs" USING btree ("tenant_id","key","started_at");

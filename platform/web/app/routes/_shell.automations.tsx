@@ -21,6 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/com
 import { Switch } from '~/components/ui/switch';
 import { api, isApiError } from '~/lib/api';
 import { paramFields, paramsFromForm } from '~/lib/automations';
+import { formatClockDate, formatClockTime } from '~/lib/clock';
 import { useLive } from '~/lib/live';
 
 const MANAGE_ROLES = new Set(['TENANT_ADMIN', 'OPS_MANAGER']);
@@ -98,10 +99,16 @@ function AutomationCard({
   canRun: boolean;
   timeZone: string;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const key = automation.key as AutomationKey;
   const fields = paramFields(key);
+  // Between recorded runs the schedule still evaluates every minute; show that it is alive.
+  const lastCheck =
+    automation.lastCheck &&
+    (!automation.lastRun || automation.lastCheck.at > automation.lastRun.startedAt)
+      ? automation.lastCheck
+      : null;
   const [values, setValues] = useState<ParamValues>(() => initialValues(automation));
   const [dirty, setDirty] = useState(false);
   // a refetch (e.g. after a live run) replaces untouched edits with the server state
@@ -200,6 +207,13 @@ function AutomationCard({
             <RunSummary run={automation.lastRun} timeZone={timeZone} />
           ) : (
             <p className="text-sm text-muted-foreground">{t('automations.neverRan')}</p>
+          )}
+          {lastCheck && (
+            <p className="mt-1 text-xs text-muted-foreground" data-testid={`last-check-${key}`}>
+              {t('automations.lastCheck', {
+                time: `${formatClockDate(lastCheck.businessTime, timeZone, i18n.language)} ${formatClockTime(lastCheck.businessTime, timeZone, i18n.language, { seconds: false })}`,
+              })}
+            </p>
           )}
         </div>
       </CardContent>
