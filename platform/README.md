@@ -77,7 +77,9 @@ re-checks every minute, so a tenant created in the console gets moving data with
 peak shedding, holiday mode) with their parameters, an enable switch, "Run now" and an "Event tonight"
 hold that keeps a floor on until a chosen time. Every rule compares against the tenant's business clock,
 so from `/console` "Jump to 19:55" then speed 10× shows the 20:00 sweep happen on its own; "Late worker
-stays" keeps one person's zone on and sends them the phone prompt. Peak shedding sheds one step per
+stays" keeps one person's zone on and sends them the phone prompt. The office is closed at weekends, so
+laptops are offline on Saturday and Sunday; the console's "Bring online" toggle puts one laptop online at
+once (or offline for the rest of the day), and "Move a laptop" says so when its laptop is offline. Peak shedding sheds one step per
 evaluation while the building load exceeds the threshold inside its window (or on "Shed now" on the
 Energy page) and restores everything once the load has stayed low for ten minutes; a "Peak load" alarm
 from the IoT core triggers an immediate evaluation. Every enabled automation is evaluated each minute,

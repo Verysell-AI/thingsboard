@@ -27,7 +27,10 @@ Credentials come from `platform/.env` (`DATASET_USER_PASSWORD`). Users per tenan
 ## The ten-minute script
 
 Times are the *business clock* shown in the header; the time machine moves it, telemetry stays on the real
-clock.
+clock. **The office is closed on Saturday and Sunday**: no persona comes in, so every laptop is offline and
+scenarios that need a laptop ("Move a laptop", the sweep's late-worker zone) show nothing. On a weekend, jump
+the time machine to a weekday hour (tick *tomorrow* on a Sunday) or use the console's **Bring online** toggle
+on the laptop first.
 
 | Step | Where | Clicks | Expected |
 |------|-------|--------|----------|

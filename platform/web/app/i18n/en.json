@@ -217,7 +217,7 @@
     "ghostMeetingHelp": "Books the room from now with nobody showing up, so the ghost-booking release can be shown.",
     "create": "Create",
     "moveLaptop": "Move a laptop",
-    "moveLaptopHelp": "The laptop reports the access point of another room until moved back.",
+    "moveLaptopHelp": "The laptop reports the access point of another room until moved back. The dot moves after a one-minute debounce.",
     "move": "Move",
     "automations": "Run an automation",
     "automationsHelp": "Runs the rule now instead of waiting for the next tick.",
@@ -232,7 +232,10 @@
     "heaterHelp": "Adds a 1.5 kW load to a plug in the room; at night the room meter raises the anomaly alarm and the notification names the plug. Run again to switch it off.",
     "morningReport": "Generate morning report now",
     "morningReportDone": "Morning report {{period}} generated{{mail}}.",
-    "mailedTo": ", emailed to {{to}}"
+    "mailedTo": ", emailed to {{to}}",
+    "bringOnline": "Bring online",
+    "takeOffline": "Take offline",
+    "moveOfflineHint": "This laptop is offline (weekend, or its persona has left): the move shows once it connects. Bring it online first to see it move."
   },
   "events": {
     "device.telemetry": "Telemetry",

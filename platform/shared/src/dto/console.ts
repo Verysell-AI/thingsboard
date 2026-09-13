@@ -11,6 +11,7 @@ export const SCENARIO_NAMES = [
   'ac-filter-degrade',
   'ghost-meeting',
   'move-laptop',
+  'laptop-toggle',
 ] as const;
 export const ScenarioNameSchema = z.enum(SCENARIO_NAMES);
 export type ScenarioName = z.infer<typeof ScenarioNameSchema>;

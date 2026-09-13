@@ -33,6 +33,31 @@ describe('demo scenarios', () => {
     sim.stop();
   });
 
+  it('laptop-toggle brings an offline laptop online at once and takes an online one offline', async () => {
+    // a Sunday: the office is closed and every persona is at home
+    const now = { value: monday(10) - 24 * 3_600_000 };
+    const { sim, registry } = buildSimulation(now);
+    await sim.start();
+    await flush();
+    sim.tick();
+    const laptop = registry.laptops()[0]!;
+    expect(laptop.shouldBeOnline(now.value)).toBe(false);
+    const moved = sim.scenario('alpha', 'move-laptop', { code: laptop.code, room: '1.3' });
+    expect(moved.accepted).toBe(true);
+    expect(moved.details).toMatchObject({ online: false });
+    expect(moved.message).toMatch(/offline right now/);
+    const on = sim.scenario('alpha', 'laptop-toggle', { code: laptop.code });
+    expect(on.accepted).toBe(true);
+    expect(on.details).toMatchObject({ online: true, room: '1.3' });
+    expect(laptop.shouldBeOnline(now.value)).toBe(true);
+    expect(laptop.shouldBeOnline(now.value + 8 * 3_600_000)).toBe(true);
+    const off = sim.scenario('alpha', 'laptop-toggle', { code: laptop.code });
+    expect(off.details).toMatchObject({ online: false });
+    expect(laptop.shouldBeOnline(now.value)).toBe(false);
+    expect(sim.scenario('alpha', 'laptop-toggle', { code: 'LIGHT-1.1' }).accepted).toBe(false);
+    sim.stop();
+  });
+
   it('late-worker-stays keeps one laptop online through the evening and everyone-leaves', async () => {
     const now = { value: monday(10) };
     const { sim, registry } = buildSimulation(now);

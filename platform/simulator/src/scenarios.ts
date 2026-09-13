@@ -93,14 +93,49 @@ export function runScenario(
       const home = device.spec.laptop?.deskRoom ?? device.room;
       device.forceLocation(room.code === home ? null : room.code);
       const loc = device.laptopLocation(now);
+      const online = device.shouldBeOnline(now);
+      const base =
+        room.code === home
+          ? `${device.code} is back at its desk in ${room.code}`
+          : `${device.code} now reports from ${room.code} (${loc.accessPoint})`;
       return {
         scenario: name,
         accepted: true,
-        message:
-          room.code === home
-            ? `${device.code} is back at its desk in ${room.code}`
-            : `${device.code} now reports from ${room.code} (${loc.accessPoint})`,
-        details: { code: device.code, room: loc.room, accessPoint: loc.accessPoint },
+        message: online
+          ? base
+          : `${base}; the laptop is offline right now, so the move shows once it comes online (use "Bring online" or a weekday hour on the time machine)`,
+        details: { code: device.code, room: loc.room, accessPoint: loc.accessPoint, online },
+      };
+    }
+    case 'laptop-toggle': {
+      if (!params.code) return { scenario: name, accepted: false, message: 'code is required' };
+      const device = registry.get(params.code) ?? registry.laptopForEmployee(params.code);
+      if (!device || device.type !== 'laptop') {
+        return { scenario: name, accepted: false, message: `laptop ${params.code} not found` };
+      }
+      if (device.shouldBeOnline(now)) {
+        device.leaveForToday(now);
+        sim.link(registry.tenant, device.code)?.disconnect();
+        return {
+          scenario: name,
+          accepted: true,
+          message: `${device.code} taken offline for the rest of the business day`,
+          details: { code: device.code, online: false },
+        };
+      }
+      // online until the end of the business day, whatever the persona or the weekend says
+      const parts = zonedDateParts(now, registry.timeZone);
+      const until = zonedTimeToEpoch(
+        { ...parts, hour: 23, minute: 59, second: 0 },
+        registry.timeZone,
+      );
+      device.forceOnline(Math.max(until, now + 60_000));
+      sim.link(registry.tenant, device.code)?.connect();
+      return {
+        scenario: name,
+        accepted: true,
+        message: `${device.code} brought online at ${device.laptopLocation(now).room} until the end of the day`,
+        details: { code: device.code, online: true, room: device.laptopLocation(now).room },
       };
     }
     case 'heater-left-on': {

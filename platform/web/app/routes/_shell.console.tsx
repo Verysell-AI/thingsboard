@@ -9,6 +9,8 @@ import {
   Sun,
   UserRoundCheck,
   Workflow,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 import { useState } from 'react';
 import type { TFunction } from 'i18next';
@@ -52,6 +54,8 @@ export default function ConsoleRoute() {
   const [moveCode, setMoveCode] = useState('LAPTOP-E003');
   const [moveRoom, setMoveRoom] = useState('2.1');
   const [lateEmployee, setLateEmployee] = useState('');
+  // live state of the laptop chosen in the move card: undefined until the socket knows it
+  const moveLaptopOnline = live.devices[moveCode]?.online;
   const [heaterRoom, setHeaterRoom] = useState('1.P');
   const [last, setLast] = useState<LastResult | null>(null);
   const queryClient = useQueryClient();
@@ -238,13 +242,33 @@ export default function ConsoleRoute() {
                   </Select>
                 </div>
               </div>
-              <Button
-                disabled={scenario.isPending}
-                onClick={() => run('move-laptop', { code: moveCode, room: moveRoom })}
-                data-testid="move-laptop"
-              >
-                {t('console.move')}
-              </Button>
+              {moveLaptopOnline === false && (
+                <p className="text-xs text-muted-foreground" data-testid="move-offline-hint">
+                  {t('console.moveOfflineHint')}
+                </p>
+              )}
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  disabled={scenario.isPending}
+                  onClick={() => run('move-laptop', { code: moveCode, room: moveRoom })}
+                  data-testid="move-laptop"
+                >
+                  {t('console.move')}
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={scenario.isPending}
+                  onClick={() => run('laptop-toggle', { code: moveCode })}
+                  data-testid="laptop-toggle"
+                >
+                  {moveLaptopOnline ? (
+                    <WifiOff className="size-4" aria-hidden />
+                  ) : (
+                    <Wifi className="size-4" aria-hidden />
+                  )}{' '}
+                  {moveLaptopOnline ? t('console.takeOffline') : t('console.bringOnline')}
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
