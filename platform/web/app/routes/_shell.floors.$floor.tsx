@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Laptop, Lightbulb, Users, Zap } from 'lucide-react';
+import { Laptop, Lightbulb, PanelRightClose, PanelRightOpen, Users, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLoaderData } from 'react-router';
@@ -18,6 +18,8 @@ import { formatPowerW } from '~/lib/format';
 import { isWasting } from '~/lib/automations';
 import { useLive } from '~/lib/live';
 import { roomLightsOn, type RoomPresence } from '~/lib/live-store';
+import { useStoredFlag } from '~/lib/use-stored-flag';
+import { cn } from '~/lib/utils';
 
 const FLOORS = [1, 2];
 
@@ -67,6 +69,13 @@ export default function FloorRoute() {
   const { plan, floor } = useLoaderData<typeof clientLoader>();
   const live = useLive();
   const [selected, setSelected] = useState<FloorSelection | null>(null);
+  // the details column can be hidden to give the plan the full width; picking something reopens it
+  const [detailsOpen, setDetailsOpen] = useStoredFlag('platform.floorDetailsOpen', true);
+  function select(target: FloorSelection | null) {
+    setSelected(target);
+    if (target) setDetailsOpen(true);
+  }
+  const DetailsIcon = detailsOpen ? PanelRightClose : PanelRightOpen;
   const summary = plan ? floorSummary(plan, live.devices, floor, live.presence) : null;
 
   // waste and misplaced flags are decided by the API; refreshed on presence changes and every minute
@@ -108,6 +117,17 @@ export default function FloorRoute() {
           <Badge variant={live.connected ? 'success' : 'secondary'} data-testid="live-status">
             {live.connected ? t('floor.live') : t('floor.offline')}
           </Badge>
+          <Button
+            variant="outline"
+            size="icon"
+            className="hidden size-8 xl:inline-flex"
+            aria-label={detailsOpen ? t('floor.hideDetails') : t('floor.showDetails')}
+            aria-pressed={detailsOpen}
+            title={detailsOpen ? t('floor.hideDetails') : t('floor.showDetails')}
+            onClick={() => setDetailsOpen(!detailsOpen)}
+          >
+            <DetailsIcon className="rtl:-scale-x-100" aria-hidden />
+          </Button>
         </div>
       </div>
 
@@ -135,7 +155,7 @@ export default function FloorRoute() {
       )}
 
       {plan ? (
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className={cn('grid gap-4', detailsOpen && 'xl:grid-cols-[minmax(0,1fr)_340px]')}>
           <div className="flex min-w-0 flex-col gap-4">
             <FloorPlanSvg
               plan={plan}
@@ -144,18 +164,20 @@ export default function FloorRoute() {
               wasting={wasting}
               misplaced={misplaced}
               selected={selected}
-              onSelect={setSelected}
+              onSelect={select}
             />
             <FloorLegend />
           </div>
-          <div className="min-w-0">
-            <FloorDetailsPanel
-              plan={plan}
-              devices={live.devices}
-              selected={selected}
-              onSelect={setSelected}
-            />
-          </div>
+          {detailsOpen && (
+            <div className="min-w-0" data-testid="floor-details">
+              <FloorDetailsPanel
+                plan={plan}
+                devices={live.devices}
+                selected={selected}
+                onSelect={select}
+              />
+            </div>
+          )}
         </div>
       ) : (
         <Card>

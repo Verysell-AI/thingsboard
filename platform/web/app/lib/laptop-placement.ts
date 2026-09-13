@@ -13,6 +13,9 @@ export function zoneAccessPoint(zone: PlanZone): string {
   return zone.accessPoint ?? accessPointForZoneCode(zone.code);
 }
 
+/** Default distance between laptop chips drawn inside one meeting room, in plan units. */
+const DEFAULT_LAPTOP_STEP = 40;
+
 export interface LaptopPlacement {
   x: number;
   y: number;
@@ -24,7 +27,8 @@ export interface LaptopPlacement {
 /**
  * Where to draw a laptop: at its desk while it reports its home access point, otherwise inside the
  * first meeting room of the reported zone whose occupancy sensor sees people (fallback: the zone's
- * first meeting room, then the desk). `index` spreads several laptops inside one room.
+ * first meeting room, then the desk). `index` spreads several laptops inside one room, `step` units
+ * apart.
  */
 export function placeLaptop(
   device: PlanDevice,
@@ -32,6 +36,7 @@ export function placeLaptop(
   plan: FloorPlan,
   devices: Record<string, DeviceLiveState>,
   index = 0,
+  step = DEFAULT_LAPTOP_STEP,
 ): LaptopPlacement | null {
   if (device.x === null || device.y === null) return null;
   const desk: LaptopPlacement = { x: device.x, y: device.y, room: null, atDesk: true };
@@ -58,12 +63,12 @@ export function placeLaptop(
   const room = occupied ?? meetingRooms[0]!;
   const g = room.geometry;
   if (!g) return desk;
-  const cols = Math.max(1, Math.floor((g.w - 40) / 28));
+  const cols = Math.max(1, Math.floor((g.w - 40) / step));
   const col = index % cols;
   const row = Math.floor(index / cols);
   return {
-    x: g.x + 24 + col * 28,
-    y: g.y + g.h - 24 - row * 26,
+    x: g.x + 24 + col * step,
+    y: g.y + g.h - 24 - row * step,
     room: room.code,
     atDesk: false,
   };

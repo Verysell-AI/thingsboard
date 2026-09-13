@@ -8,6 +8,7 @@ import { isApiError } from '~/lib/api';
 import { clearTokens, isAuthenticated } from '~/lib/auth';
 import { LiveProvider } from '~/lib/live';
 import { useMe } from '~/lib/me';
+import { useStoredFlag } from '~/lib/use-stored-flag';
 
 export function clientLoader() {
   if (!isAuthenticated()) throw redirect('/login');
@@ -18,6 +19,8 @@ export default function ShellLayout() {
   const { t } = useTranslation();
   const me = useMe();
   const [navOpen, setNavOpen] = useState(false);
+  // desktop rail: icon-only nav so wide pages such as the floor plan get the width
+  const [navCollapsed, setNavCollapsed] = useStoredFlag('platform.navCollapsed', false);
 
   if (!isAuthenticated()) return <Navigate to="/login" replace />;
 
@@ -52,6 +55,8 @@ export default function ShellLayout() {
           role={me.data.user.role}
           open={navOpen}
           onClose={() => setNavOpen(false)}
+          collapsed={navCollapsed}
+          onToggleCollapsed={() => setNavCollapsed((c) => !c)}
         />
         <div className="flex min-w-0 flex-1 flex-col">
           <Header me={me.data} navOpen={navOpen} onMenu={() => setNavOpen(true)} />
