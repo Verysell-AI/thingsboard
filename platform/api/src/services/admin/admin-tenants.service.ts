@@ -299,6 +299,12 @@ export class AdminTenantsService {
 
   private async assertHostnameFree(hostname: string, exceptId: string | null): Promise<void> {
     if (!/^[a-z0-9.-]+$/.test(hostname)) throw badRequest(`invalid hostname ${hostname}`);
+    // The proxy routes these to the console, the API and the IoT core before it ever looks at a tenant,
+    // so a tenant holding one would be unreachable. Refuse rather than create something that cannot work.
+    const { PLATFORM_HOST, API_HOST, TB_HOST } = this.c.config;
+    const reserved = [PLATFORM_HOST, API_HOST, TB_HOST].filter(Boolean).map((h) => h.toLowerCase());
+    if (reserved.includes(hostname.toLowerCase()))
+      throw conflict(`hostname ${hostname} is reserved by this deployment`);
     const clash = await this.c.db.app
       .select({ id: tenants.id })
       .from(tenants)

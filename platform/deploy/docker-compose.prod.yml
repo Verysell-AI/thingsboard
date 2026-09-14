@@ -14,6 +14,8 @@ services:
       PLATFORM_HOST: ${PLATFORM_HOST:?PLATFORM_HOST is required on a server}
       API_HOST: ${API_HOST:?API_HOST is required on a server}
       ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL is required on a server}
+      # Optional: the IoT core's interface. Left at tb.localhost the block stays private to the box.
+      TB_HOST: ${TB_HOST:-tb.localhost}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
@@ -23,6 +25,8 @@ services:
         condition: service_healthy
       web:
         condition: service_started
+      thingsboard:
+        condition: service_healthy
 
 volumes:
   caddy-data:

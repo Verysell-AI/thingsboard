@@ -205,6 +205,16 @@ describe.skipIf(!integrationEnabled)('platform console (integration)', () => {
     expect(res.statusCode).toBe(409);
   });
 
+  it('rejects a hostname the deployment reserves for its own services', async () => {
+    const res = await t.fastify.inject({
+      method: 'PATCH',
+      url: '/admin/tenants/gamma',
+      headers: auth(),
+      payload: { hostname: t.container.config.PLATFORM_HOST },
+    });
+    expect(res.statusCode).toBe(409);
+  });
+
   it('creates, updates and removes a tenant user that can then sign in', async () => {
     const created = await t.fastify.inject({
       method: 'POST',

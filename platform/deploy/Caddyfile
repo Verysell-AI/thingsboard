@@ -19,6 +19,14 @@ http:// {
 	reverse_proxy api:4000
 }
 
+# The IoT core's own interface, for showing the device registry, rule chains and alarm rules beside the
+# product. TB_HOST defaults to tb.localhost, which Caddy signs with its local CA and never takes to ACME;
+# set it to a public hostname to expose the core on a server. Unlike tenant hostnames this block gets a
+# managed certificate directly, so it does not pass through the on-demand check above.
+{$TB_HOST} {
+	reverse_proxy thingsboard:9090
+}
+
 # Platform console on the bare host and every tenant hostname
 https:// {
 	tls {

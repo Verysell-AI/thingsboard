@@ -16,6 +16,10 @@ const envSchema = z.object({
   TENANT_DOMAIN: z.string().default('demo'),
   /** Bare hostname of this deployment (the platform console); new tenants default to `<key>.<PLATFORM_HOST>`. */
   PLATFORM_HOST: z.string().min(1).default('localhost'),
+  /** Hostname of the public API, when it has one. Reserved, so no tenant can claim it. */
+  API_HOST: z.string().default(''),
+  /** Hostname serving the IoT core's own interface, when exposed. Reserved, so no tenant can claim it. */
+  TB_HOST: z.string().default(''),
   /** Zone for wall-clock rules and the header clock; docker-compose sets TZ for every service. */
   TZ: z.string().optional(),
   TIME_ZONE: z.string().default(''),

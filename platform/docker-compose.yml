@@ -21,6 +21,8 @@ x-api-env: &api-env
   TB_SERVICE_PASSWORD: ${TB_SERVICE_PASSWORD}
   TENANT_DOMAIN: ${TENANT_DOMAIN:-demo}
   PLATFORM_HOST: ${PLATFORM_HOST:-localhost}
+  API_HOST: ${API_HOST:-}
+  TB_HOST: ${TB_HOST:-}
   DATABASE_URL: postgres://app:${DB_APP_PASSWORD}@postgres:5432/${POSTGRES_DB:-platform}
   DATABASE_ADMIN_URL: postgres://app_admin:${DB_ADMIN_PASSWORD}@postgres:5432/${POSTGRES_DB:-platform}
   REDIS_URL: redis://redis:6379
