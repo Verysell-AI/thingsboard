@@ -18,14 +18,18 @@ const command: Decision = {
 describe('worthRecording keeps the history to ticks that did something', () => {
   const normal = emptyShedState();
 
-  it('drops scheduled ticks that only skipped or noted', () => {
+  it('drops periodic ticks that only skipped or noted', () => {
     expect(worthRecording('schedule', [], normal)).toBe(false);
     expect(worthRecording('schedule', [skip, skip, note], normal)).toBe(false);
+    // the fast clock chains its own ticks and a clock change enqueues one: both are periodic
+    expect(worthRecording('fast', [skip, note], normal)).toBe(false);
+    expect(worthRecording('clock', [skip], normal)).toBe(false);
   });
 
-  it('keeps every trigger other than the schedule', () => {
+  it('keeps the runs someone asked for', () => {
     expect(worthRecording('manual', [skip], normal)).toBe(true);
     expect(worthRecording('leave', [], normal)).toBe(true);
+    expect(worthRecording('alarm', [note], normal)).toBe(true);
     expect(worthRecording('backfill', [note], normal)).toBe(true);
   });
 

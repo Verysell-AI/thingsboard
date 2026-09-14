@@ -98,17 +98,24 @@ function meterEnergy(state: {
 }
 
 /**
- * Whether a run is worth a row in the history. Scheduled ticks fire every minute and most of them
- * decide nothing, so only ticks that acted (a command, a release, a notification), closed a sweep
- * day, or moved the peak-shedding state machine are recorded; every other trigger (manual runs,
- * notification actions, backfills) is always kept. Pure.
+ * Triggers the engine fires on its own: the repeatable minute tick, the ticks it chains while the
+ * business clock runs fast, and the one a clock change enqueues. Everything else (a manual run, a
+ * notification action, a peak-load alarm, a backfill) is someone asking for this run.
+ */
+const PERIODIC_TRIGGERS = new Set(['schedule', 'fast', 'clock']);
+
+/**
+ * Whether a run is worth a row in the history. The engine ticks every minute (far more often on a
+ * fast clock) and most ticks decide nothing, so a periodic tick is recorded only when it acted (a
+ * command, a release, a notification), closed a sweep day, or moved the peak-shedding state
+ * machine; a run someone asked for is always kept. Pure.
  */
 export function worthRecording(
   trigger: string,
   decisions: Decision[],
   previousShedState: PeakSheddingState,
 ): boolean {
-  if (trigger !== 'schedule') return true;
+  if (!PERIODIC_TRIGGERS.has(trigger)) return true;
   for (const d of decisions) {
     if (d.kind === 'command' || d.kind === 'release_booking' || d.kind === 'notify') return true;
     if (d.kind !== 'summary') continue;

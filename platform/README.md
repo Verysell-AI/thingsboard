@@ -82,10 +82,11 @@ laptops are offline on Saturday and Sunday; the console's "Bring online" toggle 
 once (or offline for the rest of the day), and "Move a laptop" says so when its laptop is offline. Peak shedding sheds one step per
 evaluation while the building load exceeds the threshold inside its window (or on "Shed now" on the
 Energy page) and restores everything once the load has stayed low for ten minutes; a "Peak load" alarm
-from the IoT core triggers an immediate evaluation. Every enabled automation is evaluated each minute,
-but only runs that acted (a command, a released booking, a notification, a closed sweep day or a
-peak-shedding state change) and every manual run are kept in the run history; each automation card
-still shows when the schedule last checked it.
+from the IoT core triggers an immediate evaluation. Every enabled automation is evaluated each minute
+(more often on a fast clock), but a periodic tick is kept in the run history only when it acted: a
+command, a released booking, a notification, a closed sweep day or a peak-shedding state change. Runs
+someone asked for — "Run now", a notification action, a peak-load alarm, a backfill — are always kept,
+and each automation card shows when the schedule last checked it.
 
 The morning report is generated once the business clock passes 07:00 (and from `/reports/mornings` or
 the console on demand), stored per business date and emailed to the tenant's operations managers with the
