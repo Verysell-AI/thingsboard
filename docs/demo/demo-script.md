@@ -234,3 +234,96 @@ weekend, or after _Everyone leaves_. Press **Bring online** first, or move the c
 | AC alarm does not come                | The unit is off: hold room 2.3 (Event tonight) and switch the AC on from the register, then wait ten minutes              |
 | A hostname does not resolve or 502s   | Caddy needs a moment after a container recreate; reload once, then on the box `docker compose restart caddy`               |
 | Everything                            | On the box, `make restore` with the pre-demo backup                                                                        |
+
+## 6. Questions you will get
+
+Short answers to say out loud, with the fact behind each one in case someone pushes.
+
+### Architecture
+
+**"How does this relate to ThingsBoard?"**
+ThingsBoard is our IoT core, and we run it unmodified. It owns device identity and credentials, MQTT
+ingestion, timeseries storage, threshold alarm rules and command delivery. Everything above that — tenants,
+people, bookings, automations, costs, reports — is ours. _"ThingsBoard knows a device published 412 watts.
+It has no idea that is Room 1.4, booked by Sara, in the Facilities budget."_
+Behind it: the published image `thingsboard/tb-node:4.2.1.1` with no Java source patched, a 19-node rule
+chain in `platform/thingsboard/rule-chain.json`, three alarm rules in the device profiles (_AC current
+high_, _Peak load_, _Night anomaly_), and 24 REST endpoints called from one directory,
+`api/src/services/tb/`.
+
+**"Why Node and Fastify when ThingsBoard is Java?"**
+Different jobs. The Java core does what it is good at: device connections, ingestion at volume, timeseries
+retention. Our layer is business rules that change often — tariffs, sweep policy, report formats, branding
+— and one set of TypeScript types is shared by the API, the worker, the simulator and the browser. Forking
+the Java core to add bookings would have cost us every future upgrade.
+
+**"How do you upgrade ThingsBoard without breaking this?"**
+We run the published image and pin the version; nothing in its source is patched. An upgrade is a version
+bump and a regression run, not a merge. Our coupling is one directory and one rule-chain file, both in
+version control — which is also the answer to "are you locked in?".
+
+**"How do we connect real hardware instead of the simulator?"**
+A real device authenticates with its own access token and publishes to `v1/devices/me/telemetry` over MQTT
+— the same contract the simulator uses. Nothing above the core changes. For gear that does not speak MQTT
+(BACnet, Modbus, LoRaWAN) you add a gateway or an integration; the platform sees the same devices either
+way.
+
+**"How far does it scale?"**
+Ingestion is the core's job and it is horizontally scalable on TimescaleDB. Our layer is stateless behind
+the API, so it scales by adding containers, and the per-tenant automation tick is a queued repeatable job
+spread across workers. The demo runs on one box because it is a demo. Honest answer: we have not load
+tested to ten thousand devices, and I would want a sizing exercise against your real device mix before
+quoting numbers.
+
+**"Does the time machine fake the data?"**
+No — worth being precise here. The business clock moves what the business logic believes the time is:
+bookings, schedules, the sweep, report periods. Telemetry, alarms and audit rows always carry real
+timestamps. It exists so a twelve-minute demo can show an eight-o'clock sweep. A production tenant simply
+runs at real time.
+
+### Security
+
+**"How is one customer's data kept away from another's?"**
+Four layers. The hostname resolves the tenant on every request. Postgres row-level security covers 17
+tables with 17 policies, and the runtime connects as a role that is _subject_ to those policies — a query
+that forgets its tenant filter returns nothing rather than another tenant's rows; migrations use a separate
+role that bypasses them. Each platform tenant maps to its own ThingsBoard tenant, so device data is
+separated in the core too. Redis keys and queues are namespaced per tenant.
+Behind it: `deploy/postgres-init.sh` creates `app` (restricted) and `app_admin` (`BYPASSRLS`);
+`api/src/db/tenant.ts` sets `app.tenant_id` for the life of each transaction.
+
+**"How do users sign in, and how are passwords stored?"**
+Email and password against the tenant's user table. Passwords are bcrypt hashes — never stored or
+recoverable in plaintext. A successful sign-in issues a 15-minute access token and a 7-day refresh token;
+the access token lives in memory with a session-storage mirror, so a reload keeps the session and closing
+the tab ends it. Single sign-on (SAML or OIDC) is an integration point, not a rewrite.
+
+**"Who can do what?"**
+Five roles: tenant admin, operations manager, field operator, finance, viewer. They are one table mapping
+capability keys to roles, checked before the handler runs, not scattered `if` statements — and there is a
+test asserting the whole matrix. You saw it on stage: the viewer pressed **Shed now** and was refused.
+
+**"Can the audit trail be trusted?"**
+Every change writes its audit row inside the same database transaction as the change itself, so they commit
+together or not at all. Rows carry actor, action, entity, before and after JSON, timestamp, IP and request
+id, from 36 call sites across the services — and refusals are audited as `DENIED` alongside successes.
+The honest limit: it is an append-only application table, not a tamper-proof ledger, so a database
+administrator could edit it. If you need cryptographic non-repudiation we ship rows to a write-once store
+or your SIEM — a connector, not a redesign.
+
+**"Can it run on-premise or air-gapped?"**
+Yes; that is how this demo runs. One Compose file, no cloud services, no external fonts or scripts. An
+automated test drives seven pages and asserts the browser contacted no host outside the box
+(`e2e/tests/offline-requests.spec.ts`).
+
+**"What is your backup and recovery story?"**
+`make backup` writes one tarball holding the platform database dump and the IoT core's volumes; `make
+restore` puts it back, about 75 seconds on this dataset, and we have exercised the round trip. In
+production that becomes a scheduled job with off-box retention plus Postgres point-in-time recovery.
+
+**"Is this production-ready? What is missing?"**
+Answer this one straight: it is a working system, not yet a hardened deployment. Before a paying tenant
+goes live I would add rate limiting and security headers on the API, tighten CORS from permissive to an
+explicit origin list, move secrets out of an `.env` file into a managed secret store, add single sign-on,
+move from one Compose host to a high-availability topology, and commission a penetration test. None of
+that is an architectural change — it is deployment work, on the order of two to three weeks.
